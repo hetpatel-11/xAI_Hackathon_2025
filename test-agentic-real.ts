@@ -16,13 +16,13 @@ dotenv.config({ path: '.env.local' });
 
 const testAccounts = [
   {
-    username: 'HetPatel____',
-    description: 'User-provided test account 1',
+    username: 'TheCryptoKidsX',
+    description: 'Crypto-related account (potential scam/bait)',
     type: 'profile' as const,
   },
   {
-    username: 'King66415144',
-    description: 'User-provided test account 2',
+    username: 'M75088225625461',
+    description: 'Numerical username pattern (suspicious)',
     type: 'profile' as const,
   },
 ];

@@ -1,0 +1,1174 @@
+/* GrokGuard Extension Styles - xAI Theme */
+
+/* Stats Banner - Fixed position for all pages */
+.grokguard-stats-banner {
+  position: fixed !important;
+  top: 0 !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 99999 !important;
+  background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%) !important;
+  border: 1px solid #FF0000 !important;
+  border-top: none !important;
+  border-radius: 0 0 12px 12px !important;
+  padding: 8px 20px !important;
+  box-shadow: 0 4px 20px rgba(255, 0, 0, 0.3) !important;
+}
+
+.stat-item.clickable {
+  cursor: pointer !important;
+  transition: transform 0.2s, background 0.2s !important;
+  padding: 4px 8px !important;
+  border-radius: 6px !important;
+}
+
+.stat-item.clickable:hover {
+  transform: scale(1.1) !important;
+  background: rgba(255, 0, 0, 0.2) !important;
+}
+
+.stats-content {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  max-width: 600px !important;
+  margin: 0 auto !important;
+}
+
+.stats-logo {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: #FF0000 !important;
+}
+
+.stats-items {
+  display: flex !important;
+  gap: 24px !important;
+}
+
+.stat-item {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+.stat-number {
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  color: white !important;
+}
+
+.stat-item.blocked .stat-number {
+  color: #FF0000 !important;
+}
+
+.stat-item.suspicious .stat-number {
+  color: #ffaa00 !important;
+}
+
+.stat-label {
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  color: #888 !important;
+}
+
+#grokguard-analyze-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 8px 16px !important;
+  margin-right: 8px !important;
+  background: #000000 !important;
+  background-color: #000000 !important;
+  color: white !important;
+  border: 1px solid #FF0000 !important;
+  border-radius: 9999px !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  line-height: 1 !important;
+  height: auto !important;
+  min-height: auto !important;
+}
+
+#grokguard-analyze-btn:hover {
+  background: #FF0000 !important;
+  background-color: #FF0000 !important;
+  border-color: #FF0000 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(255, 0, 0, 0.3) !important;
+}
+
+#grokguard-analyze-btn svg {
+  width: 16px !important;
+  height: 16px !important;
+  fill: currentColor !important;
+}
+
+#grokguard-analyze-btn span {
+  color: white !important;
+}
+
+/* Overlay */
+#grokguard-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(4px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.grokguard-overlay-content {
+  background: #0a0a0a;
+  border: 1px solid #FF0000;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(255, 0, 0, 0.2);
+  animation: slideUp 0.3s;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.grokguard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #FF0000;
+  background: #000000;
+}
+
+.grokguard-header h3 {
+  margin: 0;
+  color: white;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.grokguard-close {
+  background: transparent;
+  border: 1px solid #FF0000;
+  color: #FF0000;
+  font-size: 24px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.grokguard-close:hover {
+  background: #FF0000;
+  color: white;
+}
+
+.grokguard-body {
+  padding: 24px;
+  max-height: calc(90vh - 80px);
+  overflow-y: auto;
+  color: #e0e0e0;
+  background: #0a0a0a;
+}
+
+.grokguard-section {
+  margin-bottom: 24px;
+}
+
+.grokguard-section h4 {
+  color: #FF0000;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Loading spinner */
+.grokguard-loading {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.spinner {
+  border: 3px solid #1a1a1a;
+  border-top: 3px solid #FF0000;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.grokguard-loading p {
+  color: #999;
+  margin: 0;
+}
+
+/* Investigation */
+.reasoning {
+  background: #000000;
+  border: 1px solid #333;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #ccc;
+}
+
+.tools-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tool-item {
+  background: #000000;
+  border: 1px solid #333;
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 3px solid;
+}
+
+.tool-item.high {
+  border-left-color: #FF0000;
+}
+
+.tool-item.medium {
+  border-left-color: #888;
+}
+
+.tool-item.low {
+  border-left-color: #444;
+}
+
+.tool-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: #fff;
+}
+
+.tool-priority {
+  float: right;
+  font-size: 11px;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #999;
+}
+
+.tool-reason {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #999;
+}
+
+.profile-summary {
+  margin-top: 16px;
+  padding: 12px;
+  background: #000000;
+  border: 1px solid #333;
+  border-radius: 8px;
+}
+
+.profile-summary p {
+  margin: 4px 0;
+  font-size: 14px;
+  color: #ccc;
+}
+
+.score {
+  font-weight: 700;
+  color: #FF0000;
+}
+
+.risk-low { color: #00ff00; }
+.risk-medium { color: #ffaa00; }
+.risk-high { color: #FF0000; }
+
+/* Debate */
+.debate-round {
+  background: #000000;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.round-header {
+  font-weight: 700;
+  color: #FF0000;
+  margin-bottom: 12px;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+
+.debate-arguments {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.prosecutor, .defender {
+  background: #0a0a0a;
+  border: 1px solid #222;
+  padding: 12px;
+  border-radius: 6px;
+}
+
+.agent-label {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 6px;
+  color: #FF0000;
+}
+
+.confidence {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 8px;
+}
+
+.argument {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #ccc;
+}
+
+.convergence {
+  text-align: center;
+  padding: 8px;
+  background: #000000;
+  border: 1px solid #333;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #FF0000;
+}
+
+/* Verdict */
+.verdict-summary {
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 16px;
+  border: 2px solid;
+}
+
+.verdict-summary.legitimate {
+  background: #000000;
+  border-color: #00ff00;
+}
+
+.verdict-summary.uncertain {
+  background: #000000;
+  border-color: #ffaa00;
+}
+
+.verdict-summary.scam,
+.verdict-summary.suspicious {
+  background: #000000;
+  border-color: #FF0000;
+}
+
+.classification {
+  font-size: 24px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 8px;
+}
+
+.verdict-summary.legitimate .classification {
+  color: #00ff00;
+}
+
+.verdict-summary.uncertain .classification {
+  color: #ffaa00;
+}
+
+.verdict-summary.scam .classification,
+.verdict-summary.suspicious .classification {
+  color: #FF0000;
+}
+
+.verdict-summary .confidence {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 8px;
+}
+
+.verdict-summary .action {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
+}
+
+.verdict-reasoning {
+  background: #000000;
+  border: 1px solid #333;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #ccc;
+}
+
+.error {
+  color: #FF0000;
+  text-align: center;
+  padding: 20px;
+}
+
+.error p {
+  margin: 8px 0;
+}
+
+/* Feed Moderation Styles */
+
+/* Blur overlay for hidden posts */
+.grokguard-blur-overlay {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(0, 0, 0, 0.95) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 10 !important;
+  border: 2px solid #FF0000 !important;
+  border-radius: 12px !important;
+}
+
+.grokguard-warning-box {
+  text-align: center !important;
+  padding: 24px !important;
+  color: white !important;
+  max-width: 400px !important;
+}
+
+.warning-icon {
+  font-size: 48px !important;
+  margin-bottom: 12px !important;
+}
+
+.grokguard-warning-box h3 {
+  color: #FF0000 !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  margin: 0 0 12px 0 !important;
+}
+
+.grokguard-warning-box p {
+  color: #ccc !important;
+  margin: 8px 0 !important;
+  font-size: 14px !important;
+}
+
+.grokguard-warning-box .confidence {
+  color: #FF0000 !important;
+  font-weight: 600 !important;
+}
+
+.grokguard-warning-box .reason {
+  font-size: 12px !important;
+  color: #999 !important;
+  margin: 12px 0 !important;
+}
+
+.grokguard-show-anyway,
+.grokguard-learn-more {
+  background: transparent !important;
+  border: 1px solid #FF0000 !important;
+  color: #FF0000 !important;
+  padding: 8px 16px !important;
+  margin: 4px !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  transition: all 0.2s !important;
+}
+
+.grokguard-show-anyway:hover,
+.grokguard-learn-more:hover {
+  background: #FF0000 !important;
+  color: white !important;
+}
+
+/* Warning badge */
+.grokguard-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 6px 12px !important;
+  margin: 8px 0 !important;
+  background: #000000 !important;
+  border: 1px solid !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  position: relative !important;
+}
+
+.grokguard-badge.suspicious {
+  border-color: #ffaa00 !important;
+  color: #ffaa00 !important;
+}
+
+.grokguard-badge.uncertain {
+  border-color: #888 !important;
+  color: #888 !important;
+}
+
+.grokguard-badge.scam {
+  border-color: #FF0000 !important;
+  color: #FF0000 !important;
+}
+
+.grokguard-badge.analyzing {
+  border-color: #00aaff !important;
+  color: #00aaff !important;
+  animation: pulse 1.5s ease-in-out infinite !important;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.badge-icon {
+  font-size: 14px !important;
+}
+
+.badge-confidence {
+  opacity: 0.7 !important;
+  font-size: 11px !important;
+}
+
+.badge-tooltip {
+  display: none !important;
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  background: #000 !important;
+  border: 1px solid #FF0000 !important;
+  padding: 12px !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  line-height: 1.5 !important;
+  z-index: 1000 !important;
+  min-width: 250px !important;
+  margin-top: 4px !important;
+}
+
+.grokguard-badge:hover .badge-tooltip {
+  display: block !important;
+}
+
+/* Feedback buttons */
+.grokguard-feedback {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 8px 0 !important;
+  padding: 8px 12px !important;
+  background: #000000 !important;
+  border: 1px solid #333 !important;
+  border-radius: 6px !important;
+}
+
+.feedback-label {
+  font-size: 12px !important;
+  color: #999 !important;
+  margin-right: 4px !important;
+}
+
+.feedback-btn {
+  background: transparent !important;
+  border: 1px solid #444 !important;
+  border-radius: 4px !important;
+  padding: 4px 8px !important;
+  cursor: pointer !important;
+  font-size: 16px !important;
+  transition: all 0.2s !important;
+}
+
+.feedback-btn:hover {
+  border-color: #FF0000 !important;
+  transform: scale(1.1) !important;
+}
+
+.feedback-thanks {
+  color: #00ff00 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+/* Clean badge - subtle checkmark for analyzed posts */
+.grokguard-clean-badge {
+  position: absolute !important;
+  top: 4px !important;
+  right: 4px !important;
+  width: 18px !important;
+  height: 18px !important;
+  background: rgba(0, 255, 0, 0.15) !important;
+  border: 1px solid rgba(0, 255, 0, 0.4) !important;
+  border-radius: 50% !important;
+  color: #00ff00 !important;
+  font-size: 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  opacity: 0.6 !important;
+  transition: opacity 0.2s !important;
+}
+
+.grokguard-clean-badge:hover {
+  opacity: 1 !important;
+}
+
+/* Blocked Posts Sidebar */
+.grokguard-blocked-sidebar {
+  position: fixed !important;
+  top: 60px !important;
+  right: 20px !important;
+  width: 380px !important;
+  max-height: calc(100vh - 100px) !important;
+  background: #0a0a0a !important;
+  border: 2px solid #FF0000 !important;
+  border-radius: 12px !important;
+  z-index: 99998 !important;
+  box-shadow: 0 8px 32px rgba(255, 0, 0, 0.3) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  animation: slideIn 0.2s ease-out !important;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.sidebar-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 16px 20px !important;
+  border-bottom: 1px solid #FF0000 !important;
+  background: #000 !important;
+  border-radius: 10px 10px 0 0 !important;
+}
+
+.sidebar-header h3 {
+  margin: 0 !important;
+  color: #FF0000 !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+}
+
+.sidebar-close {
+  background: transparent !important;
+  border: 1px solid #FF0000 !important;
+  color: #FF0000 !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  font-size: 18px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s !important;
+}
+
+.sidebar-close:hover {
+  background: #FF0000 !important;
+  color: white !important;
+}
+
+.sidebar-content {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding: 12px !important;
+}
+
+.no-blocked {
+  color: #888 !important;
+  text-align: center !important;
+  padding: 40px 20px !important;
+  font-size: 14px !important;
+}
+
+.blocked-post-item {
+  background: #000 !important;
+  border: 1px solid #333 !important;
+  border-radius: 8px !important;
+  padding: 12px !important;
+  margin-bottom: 12px !important;
+  transition: border-color 0.2s !important;
+}
+
+.blocked-post-item:hover {
+  border-color: #FF0000 !important;
+}
+
+.blocked-post-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 8px !important;
+}
+
+.blocked-username {
+  color: #FF0000 !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+}
+
+.blocked-time {
+  color: #666 !important;
+  font-size: 11px !important;
+}
+
+.blocked-post-text {
+  color: #ccc !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  margin-bottom: 8px !important;
+  word-break: break-word !important;
+}
+
+.blocked-post-meta {
+  display: flex !important;
+  gap: 8px !important;
+  align-items: center !important;
+  margin-bottom: 8px !important;
+}
+
+.blocked-classification {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+}
+
+.blocked-classification.scam {
+  background: rgba(255, 0, 0, 0.2) !important;
+  color: #FF0000 !important;
+  border: 1px solid #FF0000 !important;
+}
+
+.blocked-classification.suspicious {
+  background: rgba(255, 170, 0, 0.2) !important;
+  color: #ffaa00 !important;
+  border: 1px solid #ffaa00 !important;
+}
+
+.blocked-confidence {
+  color: #888 !important;
+  font-size: 11px !important;
+}
+
+.blocked-post-reason {
+  color: #999 !important;
+  font-size: 11px !important;
+  line-height: 1.4 !important;
+  margin-bottom: 8px !important;
+  padding: 8px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-radius: 4px !important;
+}
+
+.blocked-post-link {
+  color: #FF0000 !important;
+  font-size: 12px !important;
+  text-decoration: none !important;
+  font-weight: 600 !important;
+  transition: opacity 0.2s !important;
+}
+
+.blocked-post-link:hover {
+  opacity: 0.8 !important;
+  text-decoration: underline !important;
+}
+
+/* ============================================
+   FACT-CHECKING & MISINFORMATION DETECTION
+   ============================================ */
+
+/* Fact-check stats */
+.stat-item.factchecked .stat-number {
+  color: #00aaff !important;
+}
+
+.stat-item.misinfo .stat-number {
+  color: #ff6600 !important;
+}
+
+.stat-item.factchecked.clickable,
+.stat-item.misinfo.clickable {
+  cursor: pointer !important;
+  transition: transform 0.2s, background 0.2s !important;
+  padding: 4px 8px !important;
+  border-radius: 6px !important;
+}
+
+.stat-item.factchecked.clickable:hover {
+  transform: scale(1.1) !important;
+  background: rgba(0, 170, 255, 0.2) !important;
+}
+
+.stat-item.misinfo.clickable:hover {
+  transform: scale(1.1) !important;
+  background: rgba(255, 102, 0, 0.2) !important;
+}
+
+/* Error state banner */
+.stats-content.error-state {
+  justify-content: center !important;
+  gap: 16px !important;
+}
+
+.refresh-btn {
+  background: #FF0000 !important;
+  color: white !important;
+  border: none !important;
+  padding: 8px 16px !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: opacity 0.2s !important;
+}
+
+.refresh-btn:hover {
+  opacity: 0.8 !important;
+}
+
+/* Fact-check button on posts */
+.grokguard-factcheck-btn {
+  background: transparent !important;
+  border: 1px solid #00aaff !important;
+  color: #00aaff !important;
+  padding: 4px 10px !important;
+  border-radius: 16px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  margin-left: 8px !important;
+  transition: all 0.2s !important;
+}
+
+.grokguard-factcheck-btn:hover {
+  background: #00aaff !important;
+  color: black !important;
+}
+
+/* Community Note (like X's Community Notes) */
+.grokguard-community-note {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%) !important;
+  border: 1px solid #00aaff !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  margin: 12px 0 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+.community-note-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-bottom: 12px !important;
+}
+
+.community-note-icon {
+  font-size: 18px !important;
+}
+
+.community-note-title {
+  font-weight: 700 !important;
+  color: #00aaff !important;
+  font-size: 14px !important;
+}
+
+.community-note-text {
+  color: #e0e0e0 !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  margin: 0 0 12px 0 !important;
+}
+
+.community-note-sources {
+  color: #888 !important;
+  font-size: 12px !important;
+  margin-bottom: 12px !important;
+}
+
+.community-note-expand {
+  background: transparent !important;
+  border: 1px solid #00aaff !important;
+  color: #00aaff !important;
+  padding: 6px 12px !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+}
+
+.community-note-expand:hover {
+  background: #00aaff !important;
+  color: black !important;
+}
+
+/* Fact-Check Overlay */
+.grokguard-factcheck-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(0, 0, 0, 0.9) !important;
+  backdrop-filter: blur(8px) !important;
+  z-index: 999999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  animation: fadeIn 0.2s !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+.factcheck-modal {
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%) !important;
+  border: 2px solid #00aaff !important;
+  border-radius: 16px !important;
+  width: 90% !important;
+  max-width: 600px !important;
+  max-height: 90vh !important;
+  overflow: hidden !important;
+  box-shadow: 0 20px 60px rgba(0, 170, 255, 0.3) !important;
+  animation: slideUp 0.3s !important;
+}
+
+.factcheck-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 20px 24px !important;
+  border-bottom: 1px solid #00aaff !important;
+  background: #000 !important;
+}
+
+.factcheck-header h2 {
+  margin: 0 !important;
+  color: #00aaff !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+}
+
+.factcheck-close {
+  background: transparent !important;
+  border: 1px solid #00aaff !important;
+  color: #00aaff !important;
+  font-size: 24px !important;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s !important;
+}
+
+.factcheck-close:hover {
+  background: #00aaff !important;
+  color: black !important;
+}
+
+.factcheck-verdict {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  padding: 24px !important;
+  background: #000 !important;
+  border-bottom: 1px solid #333 !important;
+}
+
+.verdict-emoji {
+  font-size: 48px !important;
+  margin-bottom: 8px !important;
+}
+
+.verdict-text {
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  color: white !important;
+  margin-bottom: 4px !important;
+}
+
+.verdict-confidence {
+  font-size: 14px !important;
+  color: #888 !important;
+}
+
+.factcheck-claims,
+.factcheck-explanation,
+.factcheck-context,
+.factcheck-community-note,
+.factcheck-sources {
+  padding: 16px 24px !important;
+  border-bottom: 1px solid #222 !important;
+}
+
+.factcheck-modal h3 {
+  color: #00aaff !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  margin: 0 0 12px 0 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+.factcheck-modal p {
+  color: #ccc !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  margin: 0 !important;
+}
+
+.factcheck-modal ul {
+  margin: 0 !important;
+  padding-left: 20px !important;
+  color: #ccc !important;
+}
+
+.factcheck-modal li {
+  margin: 8px 0 !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+}
+
+.factcheck-community-note {
+  background: rgba(0, 170, 255, 0.1) !important;
+}
+
+.factcheck-footer {
+  padding: 16px 24px !important;
+  text-align: center !important;
+}
+
+.factcheck-footer p {
+  color: #666 !important;
+  font-size: 12px !important;
+}
+
+/* Fact-check sidebar items */
+.factcheck-item {
+  border-left: 3px solid #00aaff !important;
+}
+
+.factcheck-verdict-mini {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 8px 12px !important;
+  border-radius: 6px !important;
+  margin: 8px 0 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+.factcheck-verdict-mini.true {
+  background: rgba(0, 255, 0, 0.15) !important;
+  border: 1px solid #00ff00 !important;
+  color: #00ff00 !important;
+}
+
+.factcheck-verdict-mini.false {
+  background: rgba(255, 0, 0, 0.15) !important;
+  border: 1px solid #ff0000 !important;
+  color: #ff0000 !important;
+}
+
+.factcheck-verdict-mini.mixed {
+  background: rgba(255, 170, 0, 0.15) !important;
+  border: 1px solid #ffaa00 !important;
+  color: #ffaa00 !important;
+}
+
+.factcheck-verdict-mini .verdict-emoji {
+  font-size: 16px !important;
+}
+
+.factcheck-verdict-mini .verdict-label {
+  flex: 1 !important;
+}
+
+.factcheck-verdict-mini .verdict-conf {
+  opacity: 0.7 !important;
+}
+
+.factcheck-claims-mini {
+  color: #aaa !important;
+  font-size: 11px !important;
+  margin: 8px 0 !important;
+  padding: 8px !important;
+  background: rgba(0, 170, 255, 0.1) !important;
+  border-radius: 4px !important;
+  line-height: 1.4 !important;
+}
+
+.factcheck-sources-mini {
+  color: #888 !important;
+  font-size: 10px !important;
+  margin: 8px 0 !important;
+}

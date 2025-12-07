@@ -64,6 +64,14 @@ npx tsx test-enhanced.ts
 
 This uses `lib/x-api/enhanced-client.ts` to compute a detailed `legitimacyScore`, risk level, and factor breakdown for predefined usernames (e.g., `XDevelopers`, `elonmusk`, `OpenAI`) without running the full agent debate.
 
+Autonomous investigation + multi-turn debate on real X accounts:
+
+```bash path=null start=null
+npx tsx test-agentic-real.ts
+```
+
+This drives the advanced `debateOrchestrator.runDebate` flow on selected real accounts, showing the investigator’s tool plan/results and a multi-round prosecutor/defender debate before the final verdict.
+
 Real X.com profile analysis – simple pipeline:
 
 ```bash path=null start=null
@@ -202,6 +210,7 @@ The root-level `test-*.ts` scripts are the main way to exercise the system today
 - `test-agent-system.ts` – runs synthetic scenarios through the basic 5-agent pipeline and prints a summary table.
 - `test-apis.ts` – validates X API and Grok/Grok Vision connectivity.
 - `test-enhanced.ts` – inspects real accounts via `EnhancedXAPIClient` and prints a detailed legitimacy breakdown.
+- `test-agentic-real.ts` – runs the autonomous investigator + multi-turn debate pipeline on selected real accounts via `debateOrchestrator.runDebate`.
 - `test-real-x-simple.ts` – runs the 5-agent debate on a fixed set of real profiles.
 - `test-real-x-data.ts` – fetches real posts and profiles (including trending content) and evaluates them.
 - `test-real-fixed.ts` – “fixed” real-account flow that pre-scores legitimacy to avoid misclassifying well-known accounts.
