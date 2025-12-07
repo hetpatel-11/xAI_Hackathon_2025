@@ -1,259 +1,315 @@
-# GrokGuard: Truly Agentic Safety Platform for X.com
+# GrokGuard: Real-Time AI Safety Platform for X.com
 
 > **xAI Hackathon 2025**
 >
-> A production-ready **autonomous multi-agent system** powered by grok-4-1-fast-reasoning that detects scams, impersonators, and bait posts while protecting free speech through multi-turn debate and tool use.
+> A Chrome extension powered by **Grok AI** that provides real-time content moderation on X.com, detecting scams, impersonators, and misinformation through instant analysis and multi-agent debate systems.
 
 ## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 18+
+- Chrome/Chromium browser
+- Grok API key (set in `.env.local`)
+
+### Installation
 
 ```bash
 # Install dependencies
 npm install
 
-# Test the TRULY AGENTIC system
-npx tsx test-agentic-real.ts
+# Set up environment variables
+cp .env.example .env.local
+# Add your GROK_API_KEY to .env.local
 ```
 
-## 🤖 What Makes This TRULY Agentic?
+### Running the System
 
-The xAI team hinted: *"Make it agentic. It's not done yet."*
+```bash
+# Terminal 1: Start the API server
+npx tsx api/server.ts
 
-**This isn't just 5 LLM calls in sequence. This is autonomous agents with:**
+# Terminal 2: Start the dashboard (optional)
+npm run dashboard
 
-### 1. **Tool Use** - Agents Decide What Data to Fetch
-```typescript
-// Investigator agent PLANS its own investigation
-const plan = await investigator.planInvestigation(content);
-// Output: "I need to fetch user profile (high priority) and check network (medium priority)"
+# Terminal 3: Load the Chrome extension
+# 1. Open Chrome → chrome://extensions/
+# 2. Enable "Developer mode"
+# 3. Click "Load unpacked"
+# 4. Select the `extension/` folder
+```
 
-// Then EXECUTES the tools it chose
-for (const action of plan.actions) {
-  if (action.tool === 'fetch_user_profile') {
-    userProfile = await xApi.getEnrichedUser(username);
+## 🎯 What It Does
+
+GrokGuard monitors your X.com feed in real time and:
+
+- **⚡ Instant Analysis**: Uses `grok-3-mini` to analyze posts as you scroll
+- **🛡️ Scam Detection**: Collapses dangerous posts with smooth animations
+- **⚠️ Misinformation Labeling**: Flags false claims with fact-check badges
+- **📊 Live Dashboard**: Track stats (Scanned, Blocked, Flagged, Fact-Checked, Misinfo)
+- **🤖 Multi-Agent Debate**: Deep profile analysis using Prosecutor/Defender/Arbiter agents
+- **🔍 Fact-Checking**: Autonomous investigation with source credibility checks
+
+## 🏗️ Architecture
+
+### Real-Time Feed Protection
+
+```
+X.com Feed → Chrome Extension → API Server → Grok AI
+                ↓
+         Instant Analysis (grok-3-mini)
+                ↓
+    [Scam] → Collapse Post
+    [Suspicious] → Flag Badge
+    [Clean] → Continue Monitoring
+```
+
+### Multi-Agent Profile Analysis
+
+```
+Username Input → Investigator Agent (plans investigation)
+                        ↓
+                  [Fetches X API Data]
+                        ↓
+        Prosecutor ⚖️ Defender (Multi-turn debate)
+              ↓              ↓
+          Round 1, Round 2, Round 3...
+                        ↓
+               [Consensus Reached]
+                        ↓
+                  Final Verdict
+```
+
+**All agents powered by `grok-4-1-fast-reasoning`**
+
+## ✨ Key Features
+
+### Chrome Extension
+- ✅ **Real-time feed monitoring** with `MutationObserver` and `IntersectionObserver`
+- ✅ **Pre-scanning** posts 2000px ahead for better UX
+- ✅ **Post state persistence** using IndexedDB
+- ✅ **Smooth collapse animations** for blocked posts
+- ✅ **Misinformation badges** with confidence scores
+- ✅ **Clickable stats sidebar** to view filtered posts
+- ✅ **Auto-scroll to posts** when clicking from dashboard
+
+### API Server
+- ✅ **Instant post analysis** endpoint (`/api/analyze-post`)
+- ✅ **Fact-checking endpoint** (`/api/fact-check`) with claim detection
+- ✅ **Stats endpoint** (`/api/stats`) for dashboard data
+- ✅ **Multi-agent debate** for profile analysis (`/api/analyze`)
+- ✅ **Feedback endpoint** (`/api/feedback`) for learning
+
+### Dashboard
+- ✅ **Real-time stats** (Scanned, Blocked, Flagged, Fact-Checked, Misinfo)
+- ✅ **Post filtering** by category (All, Blocked, Flagged, Fact-Checked, Misinfo)
+- ✅ **Activity logs** with timestamps
+- ✅ **Black & white theme** with glass-morphism effects
+- ✅ **Direct links** to original X.com posts
+
+## 🤖 Agentic AI System
+
+### What Makes It Agentic?
+
+1. **Autonomous Tool Use**: Investigator agent decides which X API endpoints to call
+2. **Multi-Turn Debate**: Prosecutor and Defender iterate until consensus
+3. **Investigation Planning**: AI plans its own data gathering strategy
+4. **Consensus Detection**: Stops debating when agents converge (cost optimization)
+5. **Adaptive Reasoning**: Agents adjust confidence based on new evidence
+
+### Agent Roles
+
+- **Investigator**: Plans investigation and fetches X API data
+- **Prosecutor**: Builds case that content is harmful
+- **Defender**: Protects free speech, argues for legitimacy
+- **Arbiter**: Makes final decision after reviewing debate
+
+## 📊 Decision System
+
+### Instant Analysis (Feed Posts)
+
+Uses `grok-3-mini` with conservative prompt:
+
+- **SCAM**: Crypto giveaways, phishing links, impersonation, "verify account" scams
+- **SUSPICIOUS**: Unverified financial claims, suspicious URLs, too-good-to-be-true offers
+- **CLEAN**: Normal tweets, opinions, news, legitimate promotions
+
+**Blocked if**: `classification === "scam" || classification === "suspicious"`
+
+### Fact-Checking
+
+Uses `grok-4-1-fast-reasoning` for:
+- Claim detection
+- Source credibility verification
+- Community context search
+- Confidence scoring
+
+**Skipped for**: Verified accounts, credible sources (Forbes, BBC, etc.)
+
+## 🎨 User Experience
+
+- **Collapse Animation**: Blocked posts smoothly collapse with 1.2s animation
+- **Badge System**: 
+  - 🟢 Clean badge for legitimate posts
+  - ⚠️ Warning badge for suspicious posts
+  - 🔴 Misinformation badge for false claims
+- **Stats Banner**: Fixed position showing real-time counts
+- **Sidebar**: Click stats to view filtered posts
+- **Toast Messages**: User feedback for actions
+
+## 📝 API Endpoints
+
+### POST `/api/analyze-post`
+Instant analysis for feed posts.
+
+**Request:**
+```json
+{
+  "username": "example_user",
+  "text": "Post content here"
+}
+```
+
+**Response:**
+```json
+{
+  "verdict": {
+    "classification": "scam" | "suspicious" | "legitimate",
+    "confidence": 0-100,
+    "recommendedAction": "quarantine" | "flag" | "no_action",
+    "reasoning": "Brief explanation"
   }
 }
 ```
 
-**NOT**: Pre-defined pipeline
-**YES**: Agents autonomously choose which X API endpoints to call
+### POST `/api/fact-check`
+Fact-checking with claim detection.
 
-### 2. **Multi-Turn Debate** - Prosecutor vs Defender Go Back and Forth
-```
-Round 1:
-  Prosecutor: "This is a scam because X" (Confidence: 80%)
-  Defender: "But what about Y evidence?" (Confidence: 60%)
-  Convergence: 40% → Continue debating
-
-Round 2:
-  Prosecutor: "I investigated Y, here's why..." (Confidence: 70%)
-  Defender: "Fair point, but Z suggests..." (Confidence: 70%)
-  Convergence: 90% → CONSENSUS REACHED
-```
-
-**NOT**: Single-shot arguments
-**YES**: Iterative reasoning until consensus
-
-### 3. **Autonomous Investigation** - Agent Plans Its Own Data Gathering
-```
-Content: @suspicious_account
-
-Investigator Agent Decides:
-✓ "Fetch user profile (high priority) - need verification status"
-✓ "Check follower network (medium) - suspicious follow ratio"
-✗ "Skip post history (low) - profile data sufficient"
-
-Then executes ONLY the tools it chose
-```
-
-**NOT**: Fetch everything
-**YES**: Cost-optimized autonomous investigation planning
-
-### 4. **Real X API Integration** - Works with Production Data
-- Agents call real X API endpoints
-- Fetch user profiles, posts, network data
-- Make decisions based on REAL account data
-- Ready for demo day with actual X.com accounts
-
-## 🎯 Architecture
-
-```
-Input (just username) → Investigator Agent (plans investigation)
-                              ↓
-                        [Fetches X API Data]
-                              ↓
-           Prosecutor ⚖️ Defender (Multi-turn debate)
-                  ↓              ↓
-              Round 1, Round 2, Round 3...
-                              ↓
-                     [Consensus Reached]
-                              ↓
-                        Final Verdict
-```
-
-**All agents powered by grok-4-1-fast-reasoning**
-
-## ✨ Key Features
-
-- ✅ **Autonomous Tool Use** - Agents decide what X API data to fetch
-- ✅ **Multi-Turn Debate** - Prosecutor vs Defender iterate until consensus
-- ✅ **Investigation Planning** - AI plans its own data gathering strategy
-- ✅ **Cost Optimized** - Only fetches data needed (not everything)
-- ✅ **Consensus Detection** - Stops when agents converge (saves API calls)
-- ✅ **Real X.com Integration** - Works with production X API
-- ✅ **100% Explainable** - Full debate logs + investigation plan
-- ✅ **Free Speech Protected** - Defender challenges every case
-
-## 📊 Demo Results
-
-Testing with **real X.com accounts**:
-
-### @elonmusk
-```
-🔍 Investigator Agent Plans:
-   → Fetch user profile (high priority)
-
-📊 Investigation Results:
-   Legitimacy Score: 100/100
-
-⚖️  Multi-Turn Debate:
-   Round 1:
-   - Prosecutor: "Verified, 229M followers, 16 years old" (0% scam)
-   - Defender: "Perfect legitimacy score, no action needed" (100% legit)
-   - Convergence: 100% → CONSENSUS REACHED
-
-🎯 Final Verdict: LEGITIMATE (no_action)
-```
-
-### @OpenAI
-```
-🔍 Investigator Agent Plans:
-   → Fetch user profile (high priority)
-
-📊 Investigation Results:
-   Legitimacy Score: 100/100
-
-⚖️  Multi-Turn Debate:
-   Round 1:
-   - Prosecutor: "Business verified, 4.5M followers" (0% scam)
-   - Defender: "Zero evidence of harm" (100% legit)
-   - Convergence: 100% → CONSENSUS REACHED
-
-🎯 Final Verdict: LEGITIMATE (no_action)
-```
-
-**Success Rate: 100% accuracy, 1-round consensus on clear cases**
-
-## 🎯 Why "Make It Agentic"?
-
-### ❌ What's NOT Agentic (LLM-as-Judge):
-```typescript
-const result = await grok.reason("Is this a scam?", systemPrompt);
-// Single call, no tools, no iteration
-```
-
-### ✅ What IS Agentic (Our System):
-```typescript
-// 1. Agent plans investigation
-const plan = await investigator.plan(content);
-
-// 2. Agent executes tools it chose
-const data = await investigator.executeTools(plan);
-
-// 3. Agents debate multiple rounds
-for (round = 1; round <= maxRounds; round++) {
-  prosecutorArg = await prosecutor.argue(data, defenderPrevious);
-  defenderArg = await defender.counter(data, prosecutorArg);
-
-  if (converged) break;
+**Request:**
+```json
+{
+  "username": "example_user",
+  "text": "Post content here",
+  "tweetUrl": "https://x.com/user/status/123"
 }
-
-// 4. Final synthesis
-const verdict = await arbiter.decide(allRounds);
 ```
 
-**Key Differences:**
-- ✅ **Tool Use**: Agents call X API autonomously
-- ✅ **Planning**: Agents decide what data to fetch
-- ✅ **Iteration**: Multi-turn debate, not single-shot
-- ✅ **Autonomy**: Agents make decisions, not just execute prompts
-- ✅ **Consensus**: Agents negotiate until agreement
+**Response:**
+```json
+{
+  "hasClaim": true,
+  "claim": "Detected claim text",
+  "verdict": "true" | "false" | "unverifiable",
+  "confidence": 0-100,
+  "reasoning": "Explanation",
+  "sources": ["source1", "source2"]
+}
+```
 
-## 🏗️ Production-Ready Features
+### GET `/api/stats`
+Real-time dashboard statistics.
 
-### Completed
-- ✅ Autonomous investigator agent with tool use
-- ✅ Multi-turn debate orchestrator
-- ✅ Real X API integration (profiles, posts, network data)
-- ✅ Enhanced legitimacy scoring (20+ factors)
-- ✅ Consensus detection (cost optimization)
-- ✅ Full TypeScript SDK with error handling
+**Response:**
+```json
+{
+  "stats": {
+    "scanned": 100,
+    "blocked": 5,
+    "flagged": 3,
+    "factChecked": 10,
+    "misinformation": 2
+  },
+  "recentPosts": [...],
+  "activityLog": [...]
+}
+```
 
-### Next Steps for Full Deployment
-- ⏳ Next.js dashboard with live debate visualization
-- ⏳ Supabase integration (store debates, learn from staff corrections)
-- ⏳ Webhook integration for real-time X.com monitoring
-- ⏳ Memory/learning loop (agents improve from feedback)
+## 🛠️ Development
 
-## 🎬 Demo Day Strategy
+### Project Structure
 
-### Show This Flow:
+```
+.
+├── extension/          # Chrome extension (Manifest V3)
+│   ├── manifest.json
+│   ├── background.js  # Service worker
+│   ├── feed-monitor.js # Content script
+│   └── content.css     # Extension styles
+├── api/               # Express.js API server
+│   └── server.ts
+├── lib/               # Core libraries
+│   ├── agents/        # AI agents
+│   │   ├── instant-analyzer.ts
+│   │   ├── fact-checker.ts
+│   │   ├── investigator.ts
+│   │   ├── prosecutor.ts
+│   │   ├── defender.ts
+│   │   ├── arbiter.ts
+│   │   └── debate-orchestrator.ts
+│   ├── grok/          # Grok API client
+│   └── x-api/         # X API client
+├── app/               # Next.js dashboard
+│   ├── page.tsx       # Main dashboard
+│   ├── layout.tsx
+│   └── globals.css
+└── SUBMISSION.md      # Hackathon submission doc
+```
 
-1. **Input**: Just a username (e.g., "@suspicious_crypto_giveaway")
-
-2. **Watch Agents Work Autonomously**:
-   ```
-   🔍 Investigator: "I'll fetch the profile and check their posts"
-   → Calls X API for profile
-   → Fetches recent posts
-
-   ⚖️  Debate Round 1:
-   Prosecutor: "New account, crypto keywords, DM solicitation"
-   Defender: "But no wallet addresses or scam links yet"
-   Convergence: 40% → Continue
-
-   ⚖️  Debate Round 2:
-   Prosecutor: "Post history shows repetitive patterns"
-   Defender: "Fair, reducing confidence to 30%"
-   Convergence: 85% → CONSENSUS
-
-   🎯 Verdict: SUSPICIOUS → Flag for review
-   ```
-
-3. **Show Transparency**:
-   - Full investigation plan
-   - Round-by-round arguments
-   - Why consensus was reached
-   - All X API calls made
-
-## 💡 What "Agentic" Means Here
-
-**Core Principles:**
-
-1. **Autonomy**: Agents decide what to do next (not pre-programmed)
-2. **Tool Use**: Agents call X API based on their own decisions
-3. **Iteration**: Agents debate multiple rounds until consensus
-4. **Planning**: Agents plan investigation strategies
-5. **Adaptation**: Agents adjust confidence based on new evidence
-
-**NOT**: Static LLM judge
-**YES**: Autonomous agent system with reasoning loops
-
----
-
-## 📝 Commands
+### Commands
 
 ```bash
-# Test agentic system with real X data
+# Start API server
+npx tsx api/server.ts
+
+# Start dashboard
+npm run dashboard
+
+# Test agentic system
 npx tsx test-agentic-real.ts
 
-# Test enhanced legitimacy scoring
-npx tsx test-enhanced.ts
-
-# Test original 5-agent system (synthetic data)
-npx tsx test-agent-system.ts
+# Test instant analyzer
+npx tsx test-apis.ts
 ```
+
+## 🎯 Challenges & Solutions
+
+### False Positives
+- **Problem**: AI flagging legitimate accounts
+- **Solution**: Multi-factor legitimacy scoring, source credibility checks, conservative prompts
+
+### Real-Time Performance
+- **Problem**: Need fast analysis for feed scrolling
+- **Solution**: Hybrid approach - `grok-3-mini` for instant, `grok-4-1-fast-reasoning` for deep analysis
+
+### Extension Context Invalidation
+- **Problem**: UI disappearing after page navigation
+- **Solution**: Heartbeat checks, state recovery, `MutationObserver` for navigation detection
+
+## 🏆 Accomplishments
+
+- ✅ **Truly agentic**: Autonomous investigation + multi-turn debate
+- ✅ **Zero false positives** on verified accounts
+- ✅ **Real-time feed protection** with instant AI analysis
+- ✅ **Production-ready** Chrome extension with smooth UX
+- ✅ **Comprehensive dashboard** for monitoring and analytics
+
+## 📚 Built With
+
+- **Grok AI** (`grok-3-mini`, `grok-4-1-fast-reasoning`)
+- **Chrome Extension API** (Manifest V3)
+- **TypeScript**
+- **Express.js**
+- **Next.js**
+- **React**
+
+## 🔮 What's Next
+
+- Human-in-the-loop learning from feedback
+- Supabase integration for persistent analytics
+- Web search integration for advanced fact-checking
+- Mobile browser support
+- Community notes integration
+- Advanced source credibility database
 
 ---
 
-*Powered by grok-4-1-fast-reasoning*
-*Real X API integration for production deployment*
+*Powered by Grok AI | Real-time protection for X.com*
