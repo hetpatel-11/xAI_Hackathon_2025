@@ -1,6 +1,6 @@
 # GrokGuard: Truly Agentic Safety Platform for X.com
 
-> 🏆 **xAI Hackathon 2025**
+> **xAI Hackathon 2025**
 >
 > A production-ready **autonomous multi-agent system** powered by grok-4-1-fast-reasoning that detects scams, impersonators, and bait posts while protecting free speech through multi-turn debate and tool use.
 
