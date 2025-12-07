@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+dist/
+build/
+.out/
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Coverage / test output
+coverage/
+.nyc_output/
+
+# Environment files (secrets)
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# Local env for this project
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Tooling caches
+.eslintcache
+.stylelintcache
+.turbo/
+.next-turbo/
+
+# Misc
+*.log.*
+*.tmp
+.tmp/
