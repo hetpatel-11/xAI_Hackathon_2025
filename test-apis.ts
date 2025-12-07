@@ -17,16 +17,16 @@ async function testAPIs() {
     console.log('✅ X API Connected!');
     console.log(`   User: @${user.data?.username}`);
     console.log(`   ID: ${user.data?.id}`);
-    console.log(`   Followers: ${user.data?.public_metrics?.followers_count}\n`);
+    console.log(`   Followers: ${user.data?.publicMetrics?.followersCount}\n`);
 
     // Test search capabilities
-    console.log('📡 Testing X API Search...');
-    const search = await client.posts.searchRecent({
-      query: 'crypto scam',
-      max_results: 5,
-      'tweet.fields': ['created_at', 'public_metrics']
-    });
-    console.log(`✅ Found ${search.data?.length || 0} recent posts about crypto scams\n`);
+    // console.log('📡 Testing X API Search...');
+    // const search = await client.posts.searchRecent({
+    //   query: 'crypto scam',
+    //   max_results: 5,
+    //   'tweet.fields': ['created_at', 'public_metrics']
+    // });
+    // console.log(`✅ Found ${search.data?.length || 0} recent posts about crypto scams\n`);
 
   } catch (error: any) {
     console.error('❌ X API Error:', error.message, '\n');

@@ -3,7 +3,7 @@
  * Handles API calls to the agent system
  */
 
-console.log('🛡️ GrokGuard background service worker started');
+console.log('GrokGuard background service worker started');
 
 // Listen for messages from content script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -17,7 +17,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 
   if (request.action === 'analyzePost') {
-    analyzePost(request.username, request.text)
+    analyzePost(request.username, request.text, request.tweetUrl)
       .then(data => sendResponse({ success: true, data }))
       .catch(error => sendResponse({ success: false, error: error.message }));
 
@@ -33,7 +33,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 
   if (request.action === 'factCheck') {
-    factCheckPost(request.username, request.text)
+    factCheckPost(request.username, request.text, request.tweetUrl)
       .then(data => sendResponse({ success: true, data }))
       .catch(error => sendResponse({ success: false, error: error.message }));
 
@@ -79,7 +79,7 @@ async function analyzeProfile(username) {
 /**
  * Call the GrokGuard API to analyze a post
  */
-async function analyzePost(username, text) {
+async function analyzePost(username, text, tweetUrl) {
   console.log(`Analyzing post from @${username}: "${text.substring(0, 50)}..."`);
 
   try {
@@ -91,7 +91,7 @@ async function analyzePost(username, text) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ username, text }),
+      body: JSON.stringify({ username, text, tweetUrl }),
     });
 
     if (!response.ok) {
@@ -345,8 +345,8 @@ function getMockPostAnalysis(username, text) {
 /**
  * Fact-check a post for misinformation
  */
-async function factCheckPost(username, text) {
-  console.log(`🔍 Fact-checking post from @${username}: "${text.substring(0, 50)}..."`);
+async function factCheckPost(username, text, tweetUrl) {
+  console.log(`Fact-checking post from @${username}: "${text.substring(0, 50)}..."`);
 
   try {
     const API_URL = 'http://127.0.0.1:3000/api/fact-check';
@@ -356,7 +356,7 @@ async function factCheckPost(username, text) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ username, text }),
+      body: JSON.stringify({ username, text, tweetUrl }),
     });
 
     if (!response.ok) {
@@ -376,7 +376,7 @@ async function factCheckPost(username, text) {
  * Submit user feedback to the API for learning loop
  */
 async function submitFeedback(feedbackData) {
-  console.log('📊 Submitting feedback:', feedbackData);
+  console.log('Submitting feedback:', feedbackData);
 
   try {
     const API_URL = 'http://localhost:3000/api/feedback';
@@ -394,12 +394,12 @@ async function submitFeedback(feedbackData) {
     }
 
     const result = await response.json();
-    console.log('✅ Feedback submitted successfully');
+    console.log('Feedback submitted successfully');
     return result;
 
   } catch (error) {
     console.error('Feedback submission error:', error);
     // Don't throw - we don't want to break the UI if feedback fails
-    console.log('⚠️ Feedback will be logged locally instead');
+    console.log('Feedback will be logged locally instead');
   }
 }

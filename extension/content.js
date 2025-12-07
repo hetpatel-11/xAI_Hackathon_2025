@@ -3,7 +3,7 @@
  * Injects "Analyze with GrokGuard" button on X.com profiles
  */
 
-console.log('🛡️ GrokGuard extension loaded');
+console.log('GrokGuard extension loaded');
 
 // Extract username from current profile page
 function getProfileUsername() {
@@ -66,7 +66,7 @@ function injectAnalyzeButton() {
 
   // Insert button as first child
   actionsContainer.insertBefore(analyzeBtn, actionsContainer.firstChild);
-  console.log(`✅ Injected analyze button for @${username}`);
+  console.log(`Injected analyze button for @${username}`);
 }
 
 // Show loading overlay
@@ -81,7 +81,7 @@ function showOverlay(username) {
   overlay.innerHTML = `
     <div class="grokguard-overlay-content">
       <div class="grokguard-header">
-        <h3>🛡️ GrokGuard Analysis</h3>
+        <h3>GROKGUARD ANALYSIS</h3>
         <button class="grokguard-close">&times;</button>
       </div>
 
@@ -95,17 +95,17 @@ function showOverlay(username) {
         </div>
 
         <div id="grokguard-investigation" class="grokguard-section" style="display:none;">
-          <h4>🔍 Investigation Plan</h4>
+          <h4>INVESTIGATION PLAN</h4>
           <div id="investigation-content"></div>
         </div>
 
         <div id="grokguard-debate" class="grokguard-section" style="display:none;">
-          <h4>⚖️ Multi-Turn Debate</h4>
+          <h4>MULTI-TURN DEBATE</h4>
           <div id="debate-content"></div>
         </div>
 
         <div id="grokguard-verdict" class="grokguard-section" style="display:none;">
-          <h4>🎯 Final Verdict</h4>
+          <h4>FINAL VERDICT</h4>
           <div id="verdict-content"></div>
         </div>
       </div>
@@ -167,12 +167,12 @@ function updateOverlay(data) {
         <div class="round-header">Round ${round.round}</div>
         <div class="debate-arguments">
           <div class="prosecutor">
-            <div class="agent-label">⚔️ Prosecutor</div>
+            <div class="agent-label">PROSECUTOR</div>
             <div class="confidence">Confidence: ${round.prosecutorConfidence}%</div>
             <div class="argument">${round.prosecutorArgument.substring(0, 200)}...</div>
           </div>
           <div class="defender">
-            <div class="agent-label">🛡️ Defender</div>
+            <div class="agent-label">DEFENDER</div>
             <div class="confidence">Confidence: ${round.defenderConfidence}%</div>
             <div class="argument">${round.defenderArgument.substring(0, 200)}...</div>
           </div>
@@ -200,7 +200,7 @@ function updateOverlay(data) {
 
 // Analyze profile by sending message to background script
 async function analyzeProfile(username) {
-  console.log(`🔍 Analyzing @${username}`);
+  console.log(`Analyzing @${username}`);
 
   // Show overlay with loading state
   showOverlay(username);
@@ -227,7 +227,7 @@ async function analyzeProfile(username) {
 
     document.querySelector('.grokguard-loading').innerHTML = `
       <div class="error">
-        <p>❌ Analysis failed</p>
+        <p>ANALYSIS FAILED</p>
         <p>${errorMessage}</p>
         ${error.message.includes('Extension context invalidated') ? '<p style="margin-top: 12px; font-size: 12px;">Press Cmd+R (Mac) or Ctrl+R (Windows) to refresh</p>' : ''}
       </div>

@@ -125,15 +125,15 @@ export class EnhancedXAPIClient {
       const user = response.data;
 
       // Calculate temporal factors
-      const createdDate = user.created_at ? new Date(user.created_at) : new Date();
+      const createdDate = user.createdAt ? new Date(user.createdAt) : new Date();
       const accountAgeDays = Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
       const accountAgeYears = Math.floor(accountAgeDays / 365);
 
       // Calculate network factors
-      const followersCount = user.public_metrics?.followers_count || 0;
-      const followingCount = user.public_metrics?.following_count || 0;
-      const tweetCount = user.public_metrics?.tweet_count || 0;
-      const listedCount = user.public_metrics?.listed_count || 0;
+      const followersCount = user.publicMetrics?.followersCount || 0;
+      const followingCount = user.publicMetrics?.followingCount || 0;
+      const tweetCount = user.publicMetrics?.tweetCount || 0;
+      const listedCount = user.publicMetrics?.listedCount || 0;
 
       const followerRatio = followingCount > 0 ? followersCount / followingCount : followersCount;
 
@@ -142,7 +142,7 @@ export class EnhancedXAPIClient {
 
       // Profile quality factors
       const bioLength = user.description?.length || 0;
-      const hasDefaultProfileImage = user.profile_image_url?.includes('default_profile') || false;
+      const hasDefaultProfileImage = user.profileImageUrl?.includes('default_profile') || false;
 
       // Analyze username for scam patterns
       const genericUsernamePattern = /^[a-zA-Z]+[0-9]{4,}$|^[a-zA-Z]+_[a-zA-Z]+[0-9]+$/;
@@ -153,15 +153,15 @@ export class EnhancedXAPIClient {
       const newAccountHighFollowing = accountAgeDays < 90 && followingCount > 500;
       const noActivityHighFollowers = tweetCount < 10 && followersCount > 1000;
       const rapidFollowing = accountAgeDays > 0 && (followingCount / accountAgeDays) > 100;
-      const emptyProfile = !user.description && !user.profile_image_url && tweetCount === 0;
+      const emptyProfile = !user.description && !user.profileImageUrl && tweetCount === 0;
 
       // Verification info
       const verificationInfo = {
         isVerified: user.verified || false,
-        verifiedType: user.verified_type,
-        isBusinessVerified: user.verified_type === 'business',
-        isGovernmentVerified: user.verified_type === 'government',
-        isBlueVerified: user.verified_type === 'blue',
+        verifiedType: user.verifiedType,
+        isBusinessVerified: user.verifiedType === 'business',
+        isGovernmentVerified: user.verifiedType === 'government',
+        isBlueVerified: user.verifiedType === 'blue',
       };
 
       // Calculate comprehensive legitimacy score
@@ -211,7 +211,7 @@ export class EnhancedXAPIClient {
           isDormantAccount: averageTweetsPerDay < 0.03, // < 1 tweet/month
 
           // Profile quality
-          hasProfileImage: !!user.profile_image_url,
+          hasProfileImage: !!user.profileImageUrl,
           hasDefaultProfileImage,
           hasBio: !!user.description,
           bioLength,
@@ -466,14 +466,14 @@ export class EnhancedXAPIClient {
     let completeness = 0;
     const maxPoints = 10;
 
-    if (user.created_at) completeness++;
+    if (user.createdAt) completeness++;
     if (user.description) completeness++;
-    if (user.profile_image_url) completeness++;
+    if (user.profileImageUrl) completeness++;
     if (user.verified !== undefined) completeness++;
-    if (user.public_metrics?.followers_count !== undefined) completeness++;
-    if (user.public_metrics?.following_count !== undefined) completeness++;
-    if (user.public_metrics?.tweet_count !== undefined) completeness++;
-    if (user.public_metrics?.listed_count !== undefined) completeness++;
+    if (user.publicMetrics?.followersCount !== undefined) completeness++;
+    if (user.publicMetrics?.followingCount !== undefined) completeness++;
+    if (user.publicMetrics?.tweetCount !== undefined) completeness++;
+    if (user.publicMetrics?.listedCount !== undefined) completeness++;
     if (user.url) completeness++;
     if (user.location) completeness++;
 
@@ -485,12 +485,12 @@ export class EnhancedXAPIClient {
    */
   async getUserPosts(userId: string, maxResults: number = 10) {
     try {
-      const response = await this.client.posts.getUserPosts(userId, {
-        max_results: maxResults,
-        'tweet.fields': ['created_at', 'public_metrics', 'entities'],
-      });
+      // Note: XDK's PostsClient doesn't have getUserPosts method yet
+      // This would need to be implemented using the appropriate XDK method
+      console.warn('getUserPosts not yet fully implemented with XDK');
+      return [];
 
-      return response.data || [];
+      // TODO: Implement using correct XDK method when available
     } catch (error) {
       console.warn('Could not fetch user posts:', error instanceof Error ? error.message : 'Unknown error');
       return [];

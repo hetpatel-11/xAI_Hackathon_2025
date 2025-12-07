@@ -43,13 +43,13 @@ export class XAPIClient {
       const user = response.data;
 
       // Calculate account age
-      const accountAge = user.created_at
-        ? Math.floor((Date.now() - new Date(user.created_at).getTime()) / (1000 * 60 * 60 * 24 * 365))
+      const accountAge = user.createdAt
+        ? Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24 * 365))
         : 0;
 
       // Calculate follower/following ratio
-      const followerRatio = user.public_metrics?.followers_count && user.public_metrics?.following_count
-        ? user.public_metrics.followers_count / user.public_metrics.following_count
+      const followerRatio = user.publicMetrics?.followersCount && user.publicMetrics?.followingCount
+        ? user.publicMetrics.followersCount / user.publicMetrics.followingCount
         : 0;
 
       // Determine if account seems legitimate based on metrics
@@ -61,14 +61,14 @@ export class XAPIClient {
           accountAgeYears: accountAge,
           followerRatio,
           isLikelyLegitimate,
-          hasHighFollowerCount: (user.public_metrics?.followers_count || 0) > 10000,
-          hasLowFollowingCount: (user.public_metrics?.following_count || 0) < 1000,
+          hasHighFollowerCount: (user.publicMetrics?.followersCount || 0) > 10000,
+          hasLowFollowingCount: (user.publicMetrics?.followingCount || 0) < 1000,
           isOldAccount: accountAge > 5,
           verificationInfo: {
             isVerified: user.verified || false,
-            verifiedType: user.verified_type || 'none',
+            verifiedType: user.verifiedType || 'none',
             // Note: X API may not return full verification data with Bearer token
-            apiLimitation: !user.verified && (user.public_metrics?.followers_count || 0) > 100000
+            apiLimitation: !user.verified && (user.publicMetrics?.followersCount || 0) > 100000
               ? 'HIGH_FOLLOWER_COUNT_BUT_UNVERIFIED_MAY_BE_API_LIMITATION'
               : null,
           },
@@ -158,12 +158,12 @@ export class XAPIClient {
    */
   async getUserPosts(userId: string, maxResults: number = 10) {
     try {
-      const response = await this.client.posts.getUserPosts(userId, {
-        max_results: maxResults,
-        'tweet.fields': ['created_at', 'public_metrics', 'entities'],
-      });
+      // Note: XDK's PostsClient doesn't have getUserPosts method yet
+      // This would need to be implemented using the appropriate XDK method
+      console.warn('getUserPosts not yet fully implemented with XDK');
+      return [];
 
-      return response.data || [];
+      // TODO: Implement using correct XDK method when available
     } catch (error) {
       // May fail with Bearer token - that's okay
       console.warn('Could not fetch user posts (may require OAuth):', error instanceof Error ? error.message : error);

@@ -5,6 +5,7 @@
 
 export type GrokModel =
   | 'grok-4-1-fast-reasoning'      // Latest reasoning model (use for all agents)
+  | 'grok-4-1-fast'                // Fast reasoning model without extended thinking
   | 'grok-2-vision-1212'           // Vision model for image analysis
   | 'grok-3-mini';                 // Fast, lightweight alternative
 

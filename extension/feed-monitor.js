@@ -3,7 +3,7 @@
  * Automatically scans and moderates X.com feed in real-time
  */
 
-console.log('🛡️ GrokGuard Feed Monitor loaded');
+console.log('GrokGuard Feed Monitor loaded');
 
 // Stats tracking
 const stats = {
@@ -14,6 +14,20 @@ const stats = {
   misinformation: 0
 };
 
+// Collapsed state for the top stats banner (persisted per-origin)
+let isBannerCollapsed = false;
+try {
+  const stored = localStorage.getItem('grokguardBannerCollapsed');
+  if (stored !== null) {
+    isBannerCollapsed = JSON.parse(stored);
+  }
+} catch (e) {
+  isBannerCollapsed = false;
+}
+
+// Whether we've already rendered the banner structure
+let statsBannerInitialized = false;
+
 // Store fact-check results for posts
 const factCheckResults = new Map();
 
@@ -22,6 +36,9 @@ const analyzedPostIds = new Set();
 
 // Store blocked posts for viewing later
 const blockedPosts = [];
+
+// Store "flagged" (uncertain) posts for viewing later
+const flaggedPosts = [];
 
 // Store fact-checked posts for viewing later
 const factCheckedPosts = [];
@@ -32,14 +49,39 @@ const misinformationPosts = [];
 // Analysis queue to prevent overwhelming the API
 const analysisQueue = [];
 let isProcessingQueue = false;
-const MAX_CONCURRENT_ANALYSES = 3; // Analyze up to 3 posts at once
+const MAX_CONCURRENT_ANALYSES = 30; // Analyze up to 30 posts at once for aggressive scanning
+
+// Cache for post states - using IndexedDB for persistence (db.js)
+// postStateCache Map removed - now using savePost/getPost from db.js
 
 // Keep track of monitoring state
 let monitorIntervalId = null;
 let isMonitoringActive = true;
 
-// Monitor feed for new posts - INSTANT FILTERING
+// Track visible posts for priority analysis
+const visiblePosts = new Set();
+
+// Intersection Observer to track visible posts for priority processing
+const visibilityObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    const postId = entry.target.getAttribute('data-post-id');
+    if (postId) {
+      if (entry.isIntersecting) {
+        visiblePosts.add(postId);
+      } else {
+        visiblePosts.delete(postId);
+      }
+    }
+  });
+}, {
+  threshold: 0.01, // Trigger when just 1% visible (very early detection)
+  rootMargin: '2000px 0px 2000px 0px' // Scan 2000px above AND below viewport (aggressive pre-scanning)
+});
+
+// Monitor feed for new posts - AGGRESSIVE PRE-SCANNING
+// Scans ALL posts in DOM, not just visible ones, for maximum coverage
 function monitorFeed() {
+  // Get ALL posts in the DOM (including those way above/below viewport)
   const posts = document.querySelectorAll('[data-testid="tweet"]');
 
   let newPosts = 0;
@@ -48,14 +90,26 @@ function monitorFeed() {
     // Extract unique post ID from the tweet link (e.g., /username/status/123456)
     const statusLink = post.querySelector('a[href*="/status/"]');
     const postId = statusLink ? statusLink.getAttribute('href') : null;
-    
+
     // Skip if no ID found
     if (!postId) return;
-    
+
     // Skip if already analyzed (tracked by ID, survives DOM recreation)
     if (analyzedPostIds.has(postId)) {
-      // Re-apply the attribute if DOM was recreated
+      // Re-apply the cached state if DOM was recreated
       if (!post.hasAttribute('data-grokguard-processed')) {
+        // Restore state from IndexedDB asynchronously
+        getPost(postId).then(cachedState => {
+          if (cachedState) {
+            // Extract username for restoration
+            const usernameLink = post.querySelector('a[href^="/"]');
+            const username = usernameLink ? usernameLink.getAttribute('href')?.replace('/', '') : '';
+            // Restore the UI state from IndexedDB
+            restorePostState(post, postId, username, cachedState);
+          }
+        }).catch(err => {
+          console.warn('Failed to restore post state:', err);
+        });
         post.setAttribute('data-grokguard-processed', 'already-analyzed');
       }
       return;
@@ -86,9 +140,19 @@ function monitorFeed() {
     stats.totalScanned++;
     newPosts++;
 
-    // Queue post for AI analysis
+    // Extract tweet URL for embedding
+    const tweetUrl = statusLink ? 'https://x.com' + statusLink.getAttribute('href') : null;
+
+    // Observe post for visibility tracking
+    post.setAttribute('data-post-id', postId);
+    visibilityObserver.observe(post);
+
+    // Check if post is currently visible
+    const isVisible = visiblePosts.has(postId);
+
+    // Queue post for AI analysis (visible posts get priority)
     post.setAttribute('data-grokguard-processed', 'queued');
-    queuePostForAnalysis(username, tweetText, post, postId);
+    queuePostForAnalysis(username, tweetText, post, postId, tweetUrl, isVisible);
   });
 
   // Update stats banner
@@ -96,10 +160,38 @@ function monitorFeed() {
 }
 
 /**
- * Queue post for analysis to avoid overwhelming the API
+ * Restore cached post state when DOM is recreated
  */
-function queuePostForAnalysis(username, text, post, postId) {
-  analysisQueue.push({ username, text, post, postId });
+function restorePostState(post, postId, username, cachedState) {
+  const { classification, confidence, reasoning, tweetUrl } = cachedState;
+
+  console.log(`🔄 Restoring state for ${postId}: ${classification}`);
+
+  if (classification === 'scam' || classification === 'suspicious') {
+    blurPost(post, username, classification, confidence, reasoning);
+    addFeedbackButtons(post, username, classification, confidence);
+  } else if (classification === 'uncertain') {
+    addWarningBadge(post, username, classification, confidence, reasoning);
+    addFeedbackButtons(post, username, classification, confidence);
+  } else {
+    addCleanBadge(post);
+  }
+}
+
+/**
+ * Queue post for analysis to avoid overwhelming the API
+ * Visible posts are prioritized for faster detection
+ */
+function queuePostForAnalysis(username, text, post, postId, tweetUrl, isVisible = false) {
+  const queueItem = { username, text, post, postId, tweetUrl, isVisible, timestamp: Date.now() };
+
+  // Prioritize visible posts - add to front of queue
+  if (isVisible) {
+    analysisQueue.unshift(queueItem);
+  } else {
+    analysisQueue.push(queueItem);
+  }
+
   processQueue();
 }
 
@@ -115,14 +207,14 @@ async function processQueue() {
 
   try {
     while (analysisQueue.length > 0 && isMonitoringActive) {
-      // Take up to MAX_CONCURRENT_ANALYSES posts from queue
-      const batch = analysisQueue.splice(0, MAX_CONCURRENT_ANALYSES);
+    // Take up to MAX_CONCURRENT_ANALYSES posts from queue
+    const batch = analysisQueue.splice(0, MAX_CONCURRENT_ANALYSES);
 
       // Analyze all posts in batch concurrently with timeout
       const analysisPromises = batch.map(item =>
         Promise.race([
-          analyzePost(item.username, item.text, item.post, item.postId),
-          new Promise((_, reject) => 
+          analyzePost(item.username, item.text, item.post, item.postId, item.tweetUrl),
+          new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Analysis timeout')), 30000)
           )
         ]).catch(err => {
@@ -138,37 +230,65 @@ async function processQueue() {
   } catch (error) {
     console.error('Queue processing error:', error);
   } finally {
-    isProcessingQueue = false;
+  isProcessingQueue = false;
   }
 }
 
 /**
  * Analyze individual post with INSTANT GROK AI
  */
-async function analyzePost(username, text, post, postId) {
+async function analyzePost(username, text, post, postId, tweetUrl) {
   let loadingBadge = null;
-  
+
   try {
     post.setAttribute('data-grokguard-processed', 'analyzing');
 
-    // Show loading indicator
+    // Show clear "Analyzing..." indicator
     loadingBadge = document.createElement('div');
     loadingBadge.className = 'grokguard-badge analyzing';
     loadingBadge.setAttribute('data-post-id', postId);
     loadingBadge.innerHTML = `
-      <span class="badge-icon">🤖</span>
-      <span class="badge-text">Scanning...</span>
+      <span style="display: inline-block; width: 8px; height: 8px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 6px;"></span>
+      <span style="font-size: 11px; font-weight: 500;">Analyzing...</span>
     `;
+    loadingBadge.style.cssText = `
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      padding: 6px 10px;
+      background: #000;
+      border: 1px solid #fff;
+      border-radius: 6px;
+      font-size: 11px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      z-index: 10;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    `;
+    
+    // Add spin animation
+    if (!document.getElementById('grokguard-spin-style')) {
+      const style = document.createElement('style');
+      style.id = 'grokguard-spin-style';
+      style.textContent = `
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
 
     const postInner = post.querySelector('[data-testid="tweetText"]')?.parentElement?.parentElement;
     if (postInner) {
-      postInner.insertBefore(loadingBadge, postInner.firstChild);
+      postInner.style.position = 'relative';
+      postInner.appendChild(loadingBadge);
     }
 
-    const result = await analyzeWithAgents(username, text, post);
+    const result = await analyzeWithAgents(username, text, post, tweetUrl);
 
     if (result && result.mock) {
-      console.warn('⚠️ GrokGuard using MOCK (API unreachable)');
+      console.warn('GrokGuard using MOCK (API unreachable)');
     }
 
     // Mark this post as analyzed (by ID) so we don't re-scan on scroll
@@ -178,6 +298,18 @@ async function analyzePost(username, text, post, postId) {
       const classification = result.verdict.classification;
       const confidence = result.verdict.confidence;
       const reasoning = result.verdict.reasoning || 'No reasoning provided';
+
+      // Save the state to IndexedDB for persistence
+      try {
+        await savePost(postId, {
+          classification,
+          confidence,
+          reasoning,
+          tweetUrl
+        });
+      } catch (err) {
+        console.warn('Failed to save post to DB:', err);
+      }
 
       if (classification === 'scam' || classification === 'suspicious') {
         stats.scamsBlocked++;
@@ -189,11 +321,29 @@ async function analyzePost(username, text, post, postId) {
         post.setAttribute('data-grokguard-processed', 'suspicious');
         addWarningBadge(post, username, classification, confidence, reasoning);
         addFeedbackButtons(post, username, classification, confidence);
+
+        // Track flagged posts so the "Flagged" counter can show them
+        const tweetTextEl = post.querySelector('[data-testid="tweetText"]');
+        const tweetText = tweetTextEl ? tweetTextEl.innerText : '';
+        const statusLinkLocal = post.querySelector('a[href*="/status/"]');
+        const postUrlLocal = statusLinkLocal ? 'https://x.com' + statusLinkLocal.getAttribute('href') : null;
+        const existsFlagged = flaggedPosts.find(p => p.url === postUrlLocal);
+        if (!existsFlagged) {
+          flaggedPosts.push({
+            username,
+            text: tweetText,
+            classification,
+            confidence,
+            reasoning,
+            url: postUrlLocal,
+            timestamp: new Date().toLocaleTimeString()
+          });
+        }
       } else {
         // AI says it's legitimate - check for misinformation/claims
         post.setAttribute('data-grokguard-processed', 'clean');
         addCleanBadge(post);
-        
+
         // Run fact-check in background for posts with potential claims
         factCheckInBackground(username, text, post, postId);
       }
@@ -222,7 +372,7 @@ async function analyzePost(username, text, post, postId) {
 /**
  * Call API to analyze post with Grok AI
  */
-async function analyzeWithAgents(username, text, post) {
+async function analyzeWithAgents(username, text, post, tweetUrl) {
   try {
     // Check if extension context is still valid
     if (!chrome.runtime?.id) {
@@ -235,7 +385,8 @@ async function analyzeWithAgents(username, text, post) {
     const response = await chrome.runtime.sendMessage({
       action: 'analyzePost',
       username: username,
-      text: text
+      text: text,
+      tweetUrl: tweetUrl
     });
 
     if (response && response.success) {
@@ -254,7 +405,7 @@ async function analyzeWithAgents(username, text, post) {
         monitorIntervalId = null;
       }
     } else {
-      console.error(`AI analysis failed for @${username}:`, error);
+    console.error(`AI analysis failed for @${username}:`, error);
     }
   }
 
@@ -269,11 +420,41 @@ function showExtensionError() {
   if (banner) {
     banner.innerHTML = `
       <div class="stats-content error-state">
-        <span class="stats-logo">⚠️ GrokGuard Needs Refresh</span>
+        <span class="stats-logo">GROKGUARD NEEDS REFRESH</span>
         <button onclick="location.reload()" class="refresh-btn">Refresh Page</button>
       </div>
     `;
   }
+}
+
+/**
+ * Check if post is from a verified/credible source
+ */
+function isPostFromCredibleSource(post, username) {
+  // Check for verified badge in DOM
+  const verifiedBadge = post.querySelector('[data-testid="icon-verified"]') || 
+                        post.querySelector('svg[viewBox*="20.75"]') || // Verified badge SVG pattern
+                        post.querySelector('[aria-label*="Verified"]');
+  
+  if (verifiedBadge) {
+    return true;
+  }
+  
+  // Check username against known credible sources
+  const credibleSources = [
+    'forbes', 'bbc', 'cnn', 'reuters', 'ap', 'associatedpress', 'nytimes', 'washingtonpost',
+    'wsj', 'bloomberg', 'theguardian', 'economist', 'ft', 'financialtimes', 'time',
+    'newsweek', 'usatoday', 'abc', 'nbc', 'cbs', 'pbs', 'npr', 'axios', 'politico',
+    'thehill', 'cnbc', 'marketwatch', 'techcrunch', 'wired', 'verge', 'ars',
+    'scientificamerican', 'nature', 'science', 'nejm', 'lancet', 'who', 'cdc',
+    'nasa', 'nsa', 'fbi', 'cia', 'whitehouse', 'state', 'defense', 'treasury',
+    'sec', 'fda', 'nih', 'nsf', 'doe', 'epa', 'usda', 'ed', 'hhs', 'dhs',
+    'elonmusk', 'xdevelopers', 'openai', 'anthropic', 'google', 'microsoft',
+    'apple', 'meta', 'amazon', 'netflix', 'disney', 'tesla', 'spacex'
+  ];
+  
+  const usernameLower = username.toLowerCase().replace('@', '');
+  return credibleSources.some(source => usernameLower.includes(source) || source.includes(usernameLower));
 }
 
 /**
@@ -291,11 +472,25 @@ async function factCheckInBackground(username, text, post, postId) {
     return;
   }
 
+  // Skip fact-checking for verified/credible sources to avoid false positives
+  if (isPostFromCredibleSource(post, username)) {
+    console.log(`⚠️ Skipping fact-check for credible source: @${username}`);
+    return;
+  }
+
+  // Extract post URL before calling API
+  const statusLink = post.querySelector('a[href*="/status/"]');
+  const postUrl = statusLink ? 'https://x.com' + statusLink.getAttribute('href') : null;
+  
+  // Store post reference by URL in case DOM changes
+  const postUrlForRefind = postUrl;
+
   try {
     const response = await chrome.runtime.sendMessage({
       action: 'factCheck',
       username: username,
-      text: text
+      text: text,
+      tweetUrl: postUrl
     });
 
     if (response && response.success && response.data) {
@@ -325,7 +520,7 @@ async function factCheckInBackground(username, text, post, postId) {
         // Show fact-check button
         addFactCheckButton(post, username, response.data);
         
-        // If misinformation detected, show community note and store separately
+        // If misinformation detected, label the post (but don't collapse)
         if (response.data.verdict === 'false' || response.data.verdict === 'mostly_false') {
           stats.misinformation++;
           
@@ -343,7 +538,31 @@ async function factCheckInBackground(username, text, post, postId) {
             timestamp: new Date().toLocaleTimeString()
           });
           
-          showCommunityNote(post, response.data);
+          // Re-find post in case DOM changed
+          let targetPost = post;
+          if (!targetPost || !targetPost.isConnected) {
+            // Try to re-find post by URL
+            if (postUrlForRefind) {
+              const statusId = postUrlForRefind.split('/status/')[1];
+              if (statusId) {
+                const link = document.querySelector(`a[href*="/status/${statusId}"]`);
+                if (link) {
+                  targetPost = link.closest('[data-testid="tweet"]') || 
+                              link.closest('article') ||
+                              link.closest('[role="article"]');
+                }
+              }
+            }
+          }
+          
+          // Add label/badge for misinformation (but don't collapse)
+          if (targetPost && targetPost.isConnected) {
+            addMisinformationBadge(targetPost, username, response.data);
+            showCommunityNote(targetPost, response.data);
+            targetPost.setAttribute('data-grokguard-processed', 'misinformation');
+          } else {
+            console.warn('Could not find post element to label for misinformation:', username);
+          }
         }
         
         updateStatsBanner();
@@ -367,7 +586,7 @@ function addFactCheckButton(post, username, factCheckData) {
 
   const btn = document.createElement('button');
   btn.className = 'grokguard-factcheck-btn';
-  btn.innerHTML = `🔍 Fact-Check`;
+  btn.innerHTML = `FACT-CHECK`;
   btn.title = 'View fact-check details';
 
   // Add verdict indicator
@@ -382,7 +601,7 @@ function addFactCheckButton(post, username, factCheckData) {
   
   if (factCheckData.verdict) {
     btn.style.borderColor = verdictColors[factCheckData.verdict] || '#888';
-    btn.innerHTML = `🔍 ${factCheckData.verdict.replace('_', ' ')}`;
+    btn.innerHTML = `${factCheckData.verdict.replace('_', ' ').toUpperCase()}`;
   }
 
   btn.addEventListener('click', () => {
@@ -438,12 +657,12 @@ function showFactCheckOverlay(post, username, factCheckData) {
   if (existing) existing.remove();
 
   const verdictEmojis = {
-    'true': '✅',
-    'mostly_true': '✔️',
-    'mixed': '⚖️',
-    'mostly_false': '⚠️',
-    'false': '❌',
-    'unverifiable': '❓'
+    'true': '✓',
+    'mostly_true': '✓',
+    'mixed': '⚖',
+    'mostly_false': '⚠',
+    'false': '✕',
+    'unverifiable': '?'
   };
 
   const overlay = document.createElement('div');
@@ -451,7 +670,7 @@ function showFactCheckOverlay(post, username, factCheckData) {
   overlay.innerHTML = `
     <div class="factcheck-modal">
       <div class="factcheck-header">
-        <h2>🔍 Fact-Check Results</h2>
+        <h2>FACT-CHECK RESULTS</h2>
         <button class="factcheck-close">×</button>
       </div>
       
@@ -525,7 +744,7 @@ function applyModeration(post, username, analysis) {
   const existingBadge = post.querySelector('.grokguard-badge');
   if (existingBadge) existingBadge.remove();
 
-  const existingOverlay = post.querySelector('.grokguard-blur-overlay');
+  const existingOverlay = post.querySelector('.grokguard-blur-overlay') || post.querySelector('.grokguard-collapse-overlay');
   if (existingOverlay) existingOverlay.remove();
 
   const existingFeedback = post.querySelector('.grokguard-feedback');
@@ -553,60 +772,177 @@ function applyModeration(post, username, analysis) {
  * Blur/hide a suspicious post
  */
 function blurPost(post, username, classification, confidence, reasoning) {
+  // Use collapse instead of blur
+  collapsePost(post, username, classification, confidence, reasoning);
+}
+
+/**
+ * Collapse a post with smooth animation instead of blurring
+ */
+function collapsePost(post, username, classification, confidence, reasoning) {
+  // Remove any existing collapse overlay first
+  const existingOverlay = post.querySelector('.grokguard-collapse-overlay');
+  if (existingOverlay) {
+    existingOverlay.remove();
+  }
+
   // Extract the post text for storage
   const tweetTextEl = post.querySelector('[data-testid="tweetText"]');
   const tweetText = tweetTextEl ? tweetTextEl.innerText : '';
-  
+
   // Extract post link
   const statusLink = post.querySelector('a[href*="/status/"]');
   const postUrl = statusLink ? 'https://x.com' + statusLink.getAttribute('href') : null;
-  
-  // Store blocked post for later viewing
-  blockedPosts.push({
-    username,
-    text: tweetText,
-    classification,
-    confidence,
-    reasoning,
-    url: postUrl,
-    timestamp: new Date().toLocaleTimeString()
-  });
-  
-  // Add blur class
-  post.style.filter = 'blur(10px)';
-  post.style.opacity = '0.5';
-  post.style.position = 'relative';
 
-  // Create overlay
+  // Store blocked post for later viewing (avoid duplicates)
+  // Only add to blockedPosts if it's a scam/suspicious, not misinformation (misinformation is tracked separately)
+  if (classification !== 'misinformation') {
+    const existingBlock = blockedPosts.find(p => p.url === postUrl);
+    if (!existingBlock) {
+      blockedPosts.push({
+        username,
+        text: tweetText,
+        classification,
+        confidence,
+        reasoning,
+        url: postUrl,
+        timestamp: new Date().toLocaleTimeString()
+      });
+    }
+  }
+
+  // Store original height for expansion
+  const originalHeight = post.offsetHeight;
+  post.setAttribute('data-original-height', originalHeight.toString());
+  post.setAttribute('data-grokguard-collapsed', 'true');
+
+  // Ensure post has relative positioning and overflow hidden for smooth animation
+  const computedStyle = window.getComputedStyle(post);
+  if (computedStyle.position === 'static') {
+  post.style.position = 'relative';
+  }
+  post.style.overflow = 'hidden';
+  
+  // Set up smooth, visible collapse animation (1.2 seconds for dramatic effect)
+  post.style.transition = 'max-height 1.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.8s ease-out';
+  post.style.maxHeight = originalHeight + 'px'; // Start at full height
+
+  // Fade out all children except the overlay with staggered timing
+  const children = Array.from(post.children).filter(child => 
+    !child.classList.contains('grokguard-collapse-overlay')
+  );
+  children.forEach((child, index) => {
+    child.style.transition = `opacity 0.6s ease-out ${index * 0.05}s, transform 0.8s ease-out ${index * 0.05}s`;
+    child.style.opacity = '0';
+    child.style.transform = 'translateY(-10px)'; // Slight upward movement
+  });
+
+  // Create collapse overlay (initially hidden, will fade in)
   const overlay = document.createElement('div');
-  overlay.className = 'grokguard-blur-overlay';
+  overlay.className = 'grokguard-collapse-overlay';
+  overlay.style.opacity = '0';
+  overlay.style.transition = 'opacity 0.6s ease-in 0.4s'; // Fade in after collapse starts
+  
+  // Customize message based on classification
+  const title = classification === 'misinformation' 
+    ? 'Misinformation Detected by GrokGuard' 
+    : 'Post Hidden by GrokGuard';
+  const label = classification === 'misinformation'
+    ? 'MISINFORMATION'
+    : classification.toUpperCase();
+  
   overlay.innerHTML = `
     <div class="grokguard-warning-box">
-      <div class="warning-icon">⚠️</div>
-      <h3>Post Hidden by GrokGuard</h3>
-      <p><strong>@${username}</strong> flagged as <strong>${classification.toUpperCase()}</strong></p>
-      <p class="confidence">AI Confidence: ${confidence}%</p>
-      <p class="reason">${reasoning.substring(0, 200)}...</p>
+      <h3>${title}</h3>
+      <p>@${username} · Flagged as ${label}</p>
+      <p class="confidence">Confidence: ${confidence}%</p>
+      <p class="reason">${reasoning.substring(0, 200)}${reasoning.length > 200 ? '...' : ''}</p>
       <button class="grokguard-show-anyway">Show Anyway</button>
-      <button class="grokguard-learn-more" data-username="${username}">Why?</button>
+      <button class="grokguard-learn-more" data-username="${username}">Learn More</button>
     </div>
   `;
 
-  // Show anyway button
-  overlay.querySelector('.grokguard-show-anyway').addEventListener('click', () => {
-    post.style.filter = 'none';
-    post.style.opacity = '1';
-    overlay.remove();
+  // Show anyway button - expand the post
+  overlay.querySelector('.grokguard-show-anyway').addEventListener('click', (e) => {
+    e.stopPropagation();
+    expandPost(post);
+    console.log('Post expanded by user');
   });
 
   // Learn more button
-  overlay.querySelector('.grokguard-learn-more').addEventListener('click', () => {
+  overlay.querySelector('.grokguard-learn-more').addEventListener('click', (e) => {
+    e.stopPropagation();
     // Trigger full analysis overlay
     window.postMessage({ type: 'GROKGUARD_ANALYZE', username }, '*');
   });
 
-  post.style.position = 'relative';
   post.appendChild(overlay);
+
+  // Animate collapse with visible, smooth animation
+  requestAnimationFrame(() => {
+    // Ensure we start at full height
+    post.style.maxHeight = originalHeight + 'px';
+    
+    requestAnimationFrame(() => {
+      // Now collapse to 120px with smooth animation
+      post.style.maxHeight = '120px';
+      
+      // Fade in overlay after a delay
+      setTimeout(() => {
+        overlay.style.opacity = '1';
+      }, 400);
+    });
+  });
+
+  console.log(`🔒 Post collapsed: @${username} (${classification}, ${confidence}%)`);
+}
+
+/**
+ * Expand a collapsed post
+ */
+function expandPost(post) {
+  const originalHeight = post.getAttribute('data-original-height');
+  const overlay = post.querySelector('.grokguard-collapse-overlay');
+
+  // Fade out overlay first
+  if (overlay) {
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.4s ease-out';
+    setTimeout(() => overlay.remove(), 400);
+  }
+
+  // Get children to fade in
+  const children = Array.from(post.children).filter(child => 
+    !child.classList.contains('grokguard-collapse-overlay')
+  );
+
+  // Animate expansion with smooth animation
+  const targetHeight = originalHeight ? parseInt(originalHeight) : 500;
+  post.style.transition = 'max-height 1.2s cubic-bezier(0.4, 0, 0.2, 1)';
+  post.style.maxHeight = targetHeight + 'px';
+  
+  // Fade in children with staggered timing
+  setTimeout(() => {
+    children.forEach((child, index) => {
+      child.style.transition = `opacity 0.6s ease-in ${index * 0.05}s, transform 0.8s ease-in ${index * 0.05}s`;
+      child.style.opacity = '1';
+      child.style.transform = 'translateY(0)';
+    });
+  }, 200);
+  
+  setTimeout(() => {
+    post.removeAttribute('data-grokguard-collapsed');
+    post.style.maxHeight = 'none';
+    post.style.overflow = '';
+    post.style.transition = '';
+    
+    // Reset children styles
+    children.forEach(child => {
+      child.style.opacity = '';
+      child.style.transition = '';
+      child.style.transform = '';
+    });
+  }, 1200);
 }
 
 /**
@@ -636,7 +972,7 @@ function addWarningBadge(post, username, classification, confidence, reasoning) 
   const badge = document.createElement('div');
   badge.className = `grokguard-badge ${classification}`;
   badge.innerHTML = `
-    <span class="badge-icon">⚠️</span>
+    <span class="badge-icon"></span>
     <span class="badge-text">AI Flagged: ${classification}</span>
     <span class="badge-confidence">${confidence}%</span>
     <div class="badge-tooltip">
@@ -655,6 +991,43 @@ function addWarningBadge(post, username, classification, confidence, reasoning) 
 }
 
 /**
+ * Add misinformation badge to post (label only, no collapse)
+ */
+function addMisinformationBadge(post, username, factCheckData) {
+  // Don't add if already has a misinformation badge
+  if (post.querySelector('.grokguard-misinfo-badge')) return;
+  
+  const verdict = factCheckData.verdict || 'false';
+  const confidence = factCheckData.confidence || 0;
+  const explanation = factCheckData.explanation || factCheckData.communityNote || 'Misinformation detected';
+  
+  const badge = document.createElement('div');
+  badge.className = 'grokguard-misinfo-badge';
+  badge.innerHTML = `
+    <span class="misinfo-icon">⚠</span>
+    <span class="misinfo-text">MISINFORMATION DETECTED</span>
+    <span class="misinfo-confidence">${confidence}%</span>
+    <div class="misinfo-tooltip">
+      <strong>Fact-Check Result</strong><br>
+      Verdict: ${verdict.replace('_', ' ').toUpperCase()}<br>
+      Confidence: ${confidence}%<br>
+      ${explanation.substring(0, 150)}...
+    </div>
+  `;
+
+  // Insert at top of post
+  const postInner = post.querySelector('[data-testid="tweetText"]')?.parentElement?.parentElement;
+  if (postInner) {
+    postInner.style.position = 'relative';
+    postInner.insertBefore(badge, postInner.firstChild);
+  } else {
+    // Fallback: insert at top of post element
+    post.style.position = 'relative';
+    post.insertBefore(badge, post.firstChild);
+  }
+}
+
+/**
  * Add feedback buttons (thumbs up/down)
  */
 function addFeedbackButtons(post, username, classification, confidence) {
@@ -669,13 +1042,13 @@ function addFeedbackButtons(post, username, classification, confidence) {
   // Thumbs up handler
   feedbackDiv.querySelector('.thumbs-up').addEventListener('click', () => {
     submitFeedback(username, classification, confidence, true);
-    feedbackDiv.innerHTML = '<span class="feedback-thanks">✅ Thanks for feedback!</span>';
+    feedbackDiv.innerHTML = '<span class="feedback-thanks">THANKS FOR FEEDBACK!</span>';
   });
 
   // Thumbs down handler
   feedbackDiv.querySelector('.thumbs-down').addEventListener('click', () => {
     submitFeedback(username, classification, confidence, false);
-    feedbackDiv.innerHTML = '<span class="feedback-thanks">✅ Feedback recorded</span>';
+    feedbackDiv.innerHTML = '<span class="feedback-thanks">FEEDBACK RECORDED</span>';
   });
 
   // Insert at bottom of post
@@ -701,7 +1074,7 @@ async function submitFeedback(username, classification, confidence, wasCorrect) 
       }
     });
 
-    console.log(`✅ Feedback submitted for @${username}: ${wasCorrect ? 'Correct' : 'Incorrect'}`);
+    console.log(`Feedback submitted for @${username}: ${wasCorrect ? 'Correct' : 'Incorrect'}`);
   } catch (error) {
     console.error('Failed to submit feedback:', error);
   }
@@ -732,53 +1105,113 @@ function updateStatsBanner() {
     document.body.appendChild(banner);
   }
 
-  // Update stats with clickable counts
+  // Render static structure once so hover/click doesn't flicker when stats change
+  if (!statsBannerInitialized) {
   banner.innerHTML = `
     <div class="stats-content">
-      <span class="stats-logo">🛡️ GrokGuard Active</span>
+        <span class="stats-logo">GROKGUARD ACTIVE</span>
       <div class="stats-items">
         <span class="stat-item">
-          <span class="stat-number">${stats.totalScanned}</span>
+            <span class="stat-number" data-stat="scanned">0</span>
           <span class="stat-label">Scanned</span>
         </span>
-        <span class="stat-item blocked clickable" id="grokguard-view-blocked" title="Click to view blocked posts">
-          <span class="stat-number">${stats.scamsBlocked}</span>
+          <span class="stat-item blocked clickable" id="grokguard-view-blocked" title="Click to view blocked posts">
+            <span class="stat-number" data-stat="blocked">0</span>
           <span class="stat-label">Blocked</span>
         </span>
-        <span class="stat-item suspicious">
-          <span class="stat-number">${stats.suspicious}</span>
+          <span class="stat-item clickable" id="grokguard-view-flagged" title="Click to view flagged posts">
+            <span class="stat-number" data-stat="flagged">0</span>
           <span class="stat-label">Flagged</span>
         </span>
-        ${stats.factChecked > 0 ? `
-          <span class="stat-item factchecked clickable" id="grokguard-view-factchecked" title="Click to view fact-checked posts">
-            <span class="stat-number">${stats.factChecked}</span>
+          <span class="stat-item clickable" id="grokguard-view-factchecked" title="Click to view fact-checked posts">
+            <span class="stat-number" data-stat="factchecked">0</span>
             <span class="stat-label">Fact-Checked</span>
           </span>
-        ` : ''}
-        ${stats.misinformation > 0 ? `
-          <span class="stat-item misinfo clickable" id="grokguard-view-misinfo" title="Click to view misinformation posts">
-            <span class="stat-number">${stats.misinformation}</span>
+          <span class="stat-item clickable" id="grokguard-view-misinfo" title="Click to view misinformation posts">
+            <span class="stat-number" data-stat="misinfo">0</span>
             <span class="stat-label">Misinfo</span>
-          </span>
-        ` : ''}
+        </span>
       </div>
+        <button class="stats-toggle" id="grokguard-toggle-banner" title="Collapse GrokGuard banner">▴</button>
     </div>
   `;
 
-  // Add click handlers
-  const blockedBtn = banner.querySelector('#grokguard-view-blocked');
-  if (blockedBtn) {
-    blockedBtn.addEventListener('click', () => showSidebar('blocked'));
-  }
+    // One-time click handlers
+    const blockedBtn = banner.querySelector('#grokguard-view-blocked');
+    if (blockedBtn) {
+      blockedBtn.addEventListener('click', () => showSidebar('blocked'));
+    }
+
+    const flaggedBtn = banner.querySelector('#grokguard-view-flagged');
+    if (flaggedBtn) {
+      flaggedBtn.addEventListener('click', () => showSidebar('flagged'));
+    }
+
+    const factcheckedBtn = banner.querySelector('#grokguard-view-factchecked');
+    if (factcheckedBtn) {
+      factcheckedBtn.addEventListener('click', () => showSidebar('factchecked'));
+    }
   
-  const factcheckedBtn = banner.querySelector('#grokguard-view-factchecked');
-  if (factcheckedBtn) {
-    factcheckedBtn.addEventListener('click', () => showSidebar('factchecked'));
+    const misinfoBtn = banner.querySelector('#grokguard-view-misinfo');
+    if (misinfoBtn) {
+      misinfoBtn.addEventListener('click', () => showSidebar('misinfo'));
+    }
+
+    const toggleBtn = banner.querySelector('#grokguard-toggle-banner');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        isBannerCollapsed = !isBannerCollapsed;
+        try {
+          localStorage.setItem('grokguardBannerCollapsed', JSON.stringify(isBannerCollapsed));
+        } catch (err) {
+          // ignore storage errors
+        }
+        updateStatsBanner();
+      });
+    }
+
+    statsBannerInitialized = true;
   }
-  
-  const misinfoBtn = banner.querySelector('#grokguard-view-misinfo');
-  if (misinfoBtn) {
-    misinfoBtn.addEventListener('click', () => showSidebar('misinfo'));
+
+  // Update counts without re-creating DOM
+  const scannedEl = banner.querySelector('[data-stat="scanned"]');
+  const blockedEl = banner.querySelector('[data-stat="blocked"]');
+  const flaggedEl = banner.querySelector('[data-stat="flagged"]');
+  const factcheckedEl = banner.querySelector('[data-stat="factchecked"]');
+  const misinfoEl = banner.querySelector('[data-stat="misinfo"]');
+
+  if (scannedEl) scannedEl.textContent = stats.totalScanned;
+  if (blockedEl) blockedEl.textContent = stats.scamsBlocked;
+  if (flaggedEl) flaggedEl.textContent = stats.suspicious;
+  if (factcheckedEl) factcheckedEl.textContent = stats.factChecked;
+  if (misinfoEl) misinfoEl.textContent = stats.misinformation;
+
+  // Show/hide optional items based on counts
+  const flaggedItem = banner.querySelector('#grokguard-view-flagged');
+  if (flaggedItem) {
+    flaggedItem.style.display = stats.suspicious > 0 ? 'flex' : 'none';
+  }
+  const factcheckedItem = banner.querySelector('#grokguard-view-factchecked');
+  if (factcheckedItem) {
+    factcheckedItem.style.display = stats.factChecked > 0 ? 'flex' : 'none';
+  }
+  const misinfoItem = banner.querySelector('#grokguard-view-misinfo');
+  if (misinfoItem) {
+    misinfoItem.style.display = stats.misinformation > 0 ? 'flex' : 'none';
+  }
+
+  // Apply collapsed state class & update toggle label
+  const toggleBtnCurrent = banner.querySelector('#grokguard-toggle-banner');
+  if (toggleBtnCurrent) {
+    toggleBtnCurrent.textContent = isBannerCollapsed ? '▾' : '▴';
+    toggleBtnCurrent.title = isBannerCollapsed ? 'Show GrokGuard stats' : 'Collapse GrokGuard banner';
+  }
+
+  if (isBannerCollapsed) {
+    banner.classList.add('collapsed');
+  } else {
+    banner.classList.remove('collapsed');
   }
 }
 
@@ -805,17 +1238,22 @@ function showSidebar(type) {
   
   if (type === 'blocked') {
     title = 'Blocked Posts';
-    icon = '🛡️';
+    icon = '';
     posts = blockedPosts;
     emptyMessage = 'No posts blocked yet. GrokGuard is monitoring your feed.';
+  } else if (type === 'flagged') {
+    title = 'Flagged Posts';
+    icon = '';
+    posts = flaggedPosts;
+    emptyMessage = 'No posts flagged yet.';
   } else if (type === 'factchecked') {
     title = 'Fact-Checked Posts';
-    icon = '🔍';
+    icon = '';
     posts = factCheckedPosts;
     emptyMessage = 'No posts with claims detected yet.';
   } else if (type === 'misinfo') {
     title = 'Misinformation Detected';
-    icon = '⚠️';
+    icon = '';
     posts = misinformationPosts;
     emptyMessage = 'No misinformation detected yet.';
   }
@@ -835,7 +1273,7 @@ function showSidebar(type) {
     
     if (type === 'blocked') {
       postsHtml = posts.map(post => `
-        <div class="blocked-post-item">
+        <div class="blocked-post-item" data-url="${post.url || ''}">
           <div class="blocked-post-header">
             <span class="blocked-username">@${post.username}</span>
             <span class="blocked-time">${post.timestamp}</span>
@@ -846,7 +1284,7 @@ function showSidebar(type) {
             <span class="blocked-confidence">${post.confidence}%</span>
           </div>
           <div class="blocked-post-reason">${post.reasoning}</div>
-          ${post.url ? `<a href="${post.url}" target="_blank" class="blocked-post-link">View Original →</a>` : ''}
+          ${post.url ? `<span class="blocked-post-link" style="cursor: pointer; color: #ffffff; text-decoration: underline;">View Original →</span>` : ''}
         </div>
       `).join('');
     } else {
@@ -855,16 +1293,16 @@ function showSidebar(type) {
         const verdictClass = post.verdict === 'false' || post.verdict === 'mostly_false' ? 'false' :
                             post.verdict === 'true' || post.verdict === 'mostly_true' ? 'true' : 'mixed';
         const verdictEmoji = {
-          'true': '✅',
-          'mostly_true': '✔️',
-          'mixed': '⚖️',
-          'mostly_false': '⚠️',
-          'false': '❌',
-          'unverifiable': '❓'
-        }[post.verdict] || '❓';
+          'true': '✓',
+          'mostly_true': '✓',
+          'mixed': '⚖',
+          'mostly_false': '⚠',
+          'false': '✕',
+          'unverifiable': '?'
+        }[post.verdict] || '?';
         
         return `
-          <div class="blocked-post-item factcheck-item">
+          <div class="blocked-post-item factcheck-item" data-url="${post.url || ''}">
             <div class="blocked-post-header">
               <span class="blocked-username">@${post.username}</span>
               <span class="blocked-time">${post.timestamp}</span>
@@ -891,7 +1329,7 @@ function showSidebar(type) {
               </div>
             ` : ''}
             
-            ${post.url ? `<a href="${post.url}" target="_blank" class="blocked-post-link">View Original →</a>` : ''}
+            ${post.url ? `<span class="blocked-post-link" style="cursor: pointer; color: #ffffff; text-decoration: underline;">View Original →</span>` : ''}
           </div>
         `;
       }).join('');
@@ -908,12 +1346,150 @@ function showSidebar(type) {
     `;
   }
 
+  // Make sidebar items clickable to jump to the actual tweet
+  const items = sidebar.querySelectorAll('.blocked-post-item');
+  items.forEach(item => {
+    // Prevent any default navigation behavior
+    item.style.cursor = 'pointer';
+    
+    item.addEventListener('click', (e) => {
+      // ALWAYS prevent default and stop propagation
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      
+      const url = item.getAttribute('data-url');
+      if (!url) {
+        console.warn('No URL found for sidebar item');
+        return;
+      }
+      
+      // Scroll to the tweet on the current page
+      focusTweetByUrl(url);
+      
+      // Return false to ensure no navigation
+      return false;
+    }, true); // Use capture phase to catch early
+    
+    // Also handle link clicks specifically (now spans, but just in case)
+    const link = item.querySelector('.blocked-post-link');
+    if (link) {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        const url = item.getAttribute('data-url');
+        if (url) {
+          focusTweetByUrl(url);
+        }
+        return false;
+      }, true);
+    }
+  });
+
   // Close button handler
   sidebar.querySelector('.sidebar-close').addEventListener('click', () => {
     sidebar.remove();
   });
 
   document.body.appendChild(sidebar);
+}
+
+/**
+ * Try to scroll to and highlight the tweet corresponding to a URL
+ */
+function focusTweetByUrl(url) {
+  try {
+    if (!url) {
+      console.warn('No URL provided to focusTweetByUrl');
+      return;
+    }
+
+    const parsed = new URL(url);
+    const path = parsed.pathname; // e.g. /username/status/1234567890
+    const statusId = path.split('/status/')[1]; // Extract status ID
+    
+    if (!statusId) {
+      console.warn('Could not extract status ID from URL:', url);
+      // Navigate to the URL in the same page instead of opening new tab
+      window.location.href = url;
+      return;
+    }
+
+    // Method 1: Find by exact href match (most reliable)
+    const link = document.querySelector(`a[href="${path}"]`) || 
+                 document.querySelector(`a[href*="/status/${statusId}"]`);
+    
+    if (link) {
+      const tweet = link.closest('[data-testid="tweet"]') || 
+                    link.closest('article') ||
+                    link.closest('[role="article"]');
+      
+      if (tweet) {
+        // Scroll to tweet with smooth animation
+        tweet.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Highlight the tweet temporarily
+        tweet.classList.add('grokguard-highlighted-tweet');
+        tweet.style.transition = 'all 0.3s ease';
+        setTimeout(() => {
+          tweet.classList.remove('grokguard-highlighted-tweet');
+        }, 3000);
+        
+        // Also try to focus/highlight the link itself
+        link.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        return;
+      }
+    }
+
+    // Method 2: Find by status ID in any link within tweet containers
+    const allTweets = document.querySelectorAll('[data-testid="tweet"], article[role="article"]');
+    for (const tweet of allTweets) {
+      const links = tweet.querySelectorAll('a[href*="/status/"]');
+      for (const link of links) {
+        if (link.getAttribute('href')?.includes(statusId)) {
+          tweet.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          tweet.classList.add('grokguard-highlighted-tweet');
+          setTimeout(() => {
+            tweet.classList.remove('grokguard-highlighted-tweet');
+          }, 3000);
+          return;
+        }
+      }
+    }
+
+    // Method 3: Wait a bit and retry (tweets might be lazy-loaded)
+    console.log('Tweet not found immediately, waiting for lazy load...');
+    setTimeout(() => {
+      const retryLink = document.querySelector(`a[href*="/status/${statusId}"]`);
+      if (retryLink) {
+        const retryTweet = retryLink.closest('[data-testid="tweet"]') || 
+                          retryLink.closest('article') ||
+                          retryLink.closest('[role="article"]');
+        if (retryTweet) {
+          retryTweet.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          retryTweet.classList.add('grokguard-highlighted-tweet');
+          setTimeout(() => {
+            retryTweet.classList.remove('grokguard-highlighted-tweet');
+          }, 3000);
+          return;
+        }
+      }
+      
+      // If still not found, show a message but DON'T navigate
+      console.warn('Tweet not found on current page. It may not be loaded yet. Try scrolling to load more tweets.');
+      // Optionally show a toast notification
+      const toast = document.createElement('div');
+      toast.textContent = 'Tweet not found on current page. Try scrolling to load more.';
+      toast.style.cssText = 'position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: #000; color: #fff; padding: 12px 24px; border: 1px solid #fff; border-radius: 8px; z-index: 999999;';
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }, 500);
+  } catch (e) {
+    console.error('Error in focusTweetByUrl:', e);
+    // Don't navigate on error - just log it
+  }
 }
 
 /**
@@ -943,12 +1519,12 @@ function startMonitoring() {
   }
   
   isMonitoringActive = true;
-  console.log('✅ Feed monitoring active - scanning every 2s');
-  
+  console.log('Feed monitoring active - scanning every 200ms for instant detection');
+
   updateStatsBanner();
   monitorFeed();
-  
-  // Start interval
+
+  // Start interval - scan every 200ms for ultra-fast detection as user scrolls
   monitorIntervalId = setInterval(() => {
     // Check if extension context is still valid
     if (!chrome.runtime?.id) {
@@ -958,11 +1534,11 @@ function startMonitoring() {
       showExtensionError();
       return;
     }
-    
+
     if (isMonitoringActive) {
       monitorFeed();
     }
-  }, 2000);
+  }, 200); // Ultra-fast scanning for instant detection during scrolling
 }
 
 /**
@@ -983,3 +1559,14 @@ startMonitoring();
 
 // Heartbeat every 10 seconds to catch stuck states
 setInterval(heartbeatCheck, 10000);
+
+// Add scroll listener for instant detection when user scrolls
+let scrollTimeout;
+window.addEventListener('scroll', () => {
+  // Debounce scroll events - scan immediately on scroll, then wait 100ms
+  clearTimeout(scrollTimeout);
+  monitorFeed(); // Immediate scan on scroll
+  scrollTimeout = setTimeout(() => {
+    monitorFeed(); // Follow-up scan after scroll settles
+  }, 100);
+}, { passive: true });

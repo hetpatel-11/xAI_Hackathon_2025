@@ -178,7 +178,7 @@ Based on this content, which tools should I use to investigate? Output your plan
     const profile = await enhancedXApiClient.getEnrichedUser(username);
 
     if (profile) {
-      this.log(`  ✓ Found: ${profile.followers_count} followers, ${profile.enrichedData.accountAgeYears}y old`);
+      this.log(`  ✓ Found: ${profile.public_metrics?.followers_count || 0} followers, ${profile.enrichedData.accountAgeYears}y old`);
     } else {
       this.log(`  ✗ Profile not found`);
     }

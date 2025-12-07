@@ -6,7 +6,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "api": "tsx api/server.ts",
-    "dev": "tsx api/server.ts"
+    "dev": "tsx api/server.ts",
+    "dashboard": "next dev -p 3001",
+    "build": "next build",
+    "start": "next start -p 3001"
   },
   "repository": {
     "type": "git",

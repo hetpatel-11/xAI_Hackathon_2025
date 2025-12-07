@@ -1,18 +1,32 @@
 /* GrokGuard Extension Styles - xAI Theme */
 
-/* Stats Banner - Fixed position for all pages */
+/* Stats Banner - Fixed position for all pages - Black & White */
 .grokguard-stats-banner {
   position: fixed !important;
   top: 0 !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
   z-index: 99999 !important;
-  background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%) !important;
-  border: 1px solid #FF0000 !important;
+  background: #000000 !important;
+  border: 1px solid #ffffff !important;
   border-top: none !important;
-  border-radius: 0 0 12px 12px !important;
-  padding: 8px 20px !important;
-  box-shadow: 0 4px 20px rgba(255, 0, 0, 0.3) !important;
+  border-radius: 0 0 8px 8px !important;
+  padding: 10px 24px !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Collapsed banner state so it stays out of the way */
+.grokguard-stats-banner.collapsed {
+  padding: 6px 14px !important;
+  border-radius: 0 0 999px 999px !important;
+}
+
+.grokguard-stats-banner.collapsed .stats-items {
+  display: none !important;
+}
+
+.grokguard-stats-banner.collapsed .stats-logo {
+  font-size: 12px !important;
 }
 
 .stat-item.clickable {
@@ -24,7 +38,7 @@
 
 .stat-item.clickable:hover {
   transform: scale(1.1) !important;
-  background: rgba(255, 0, 0, 0.2) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
 }
 
 .stats-content {
@@ -33,12 +47,35 @@
   justify-content: space-between !important;
   max-width: 600px !important;
   margin: 0 auto !important;
+  gap: 12px !important;
 }
 
 .stats-logo {
   font-size: 16px !important;
   font-weight: 700 !important;
-  color: #FF0000 !important;
+  color: #ffffff !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+}
+
+.stats-toggle {
+  background: transparent !important;
+  border: 1px solid #ffffff !important;
+  color: #ffffff !important;
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  font-size: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+}
+
+.stats-toggle:hover {
+  background: #ffffff !important;
+  color: #000000 !important;
 }
 
 .stats-items {
@@ -50,7 +87,10 @@
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
+  justify-content: center !important;
   gap: 4px !important;
+  min-width: 72px !important;
+  text-align: center !important;
 }
 
 .stat-number {
@@ -60,18 +100,19 @@
 }
 
 .stat-item.blocked .stat-number {
-  color: #FF0000 !important;
+  color: #ffffff !important;
 }
 
 .stat-item.suspicious .stat-number {
-  color: #ffaa00 !important;
+  color: #ffffff !important;
 }
 
 .stat-label {
   font-size: 11px !important;
   text-transform: uppercase !important;
   letter-spacing: 0.5px !important;
-  color: #888 !important;
+  color: #cccccc !important;
+  text-align: center !important;
 }
 
 #grokguard-analyze-btn {
@@ -83,7 +124,7 @@
   background: #000000 !important;
   background-color: #000000 !important;
   color: white !important;
-  border: 1px solid #FF0000 !important;
+  border: 1px solid #ffffff !important;
   border-radius: 9999px !important;
   font-weight: 600 !important;
   font-size: 14px !important;
@@ -93,14 +134,17 @@
   line-height: 1 !important;
   height: auto !important;
   min-height: auto !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
 }
 
 #grokguard-analyze-btn:hover {
-  background: #FF0000 !important;
-  background-color: #FF0000 !important;
-  border-color: #FF0000 !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  border-color: #ffffff !important;
+  color: #000000 !important;
   transform: translateY(-1px) !important;
-  box-shadow: 0 4px 12px rgba(255, 0, 0, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3) !important;
 }
 
 #grokguard-analyze-btn svg {
@@ -137,13 +181,13 @@
 
 .grokguard-overlay-content {
   background: #0a0a0a;
-  border: 1px solid #FF0000;
+  border: 1px solid #ffffff;
   border-radius: 12px;
   width: 90%;
   max-width: 800px;
   max-height: 90vh;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(255, 0, 0, 0.2);
+  box-shadow: 0 20px 60px rgba(255, 255, 255, 0.1);
   animation: slideUp 0.3s;
 }
 
@@ -163,7 +207,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  border-bottom: 1px solid #FF0000;
+  border-bottom: 1px solid #ffffff;
   background: #000000;
 }
 
@@ -176,8 +220,8 @@
 
 .grokguard-close {
   background: transparent;
-  border: 1px solid #FF0000;
-  color: #FF0000;
+  border: 1px solid #ffffff;
+  color: #ffffff;
   font-size: 24px;
   width: 32px;
   height: 32px;
@@ -190,8 +234,8 @@
 }
 
 .grokguard-close:hover {
-  background: #FF0000;
-  color: white;
+  background: #ffffff;
+  color: #000000;
 }
 
 .grokguard-body {
@@ -207,7 +251,7 @@
 }
 
 .grokguard-section h4 {
-  color: #FF0000;
+  color: #ffffff;
   font-size: 16px;
   font-weight: 600;
   margin: 0 0 12px 0;
@@ -223,7 +267,7 @@
 
 .spinner {
   border: 3px solid #1a1a1a;
-  border-top: 3px solid #FF0000;
+  border-top: 3px solid #ffffff;
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -268,15 +312,15 @@
 }
 
 .tool-item.high {
-  border-left-color: #FF0000;
+  border-left-color: #ffffff;
 }
 
 .tool-item.medium {
-  border-left-color: #888;
+  border-left-color: #cccccc;
 }
 
 .tool-item.low {
-  border-left-color: #444;
+  border-left-color: #888888;
 }
 
 .tool-name {
@@ -317,12 +361,12 @@
 
 .score {
   font-weight: 700;
-  color: #FF0000;
+  color: #ffffff;
 }
 
-.risk-low { color: #00ff00; }
-.risk-medium { color: #ffaa00; }
-.risk-high { color: #FF0000; }
+.risk-low { color: #ffffff; }
+.risk-medium { color: #cccccc; }
+.risk-high { color: #ffffff; }
 
 /* Debate */
 .debate-round {
@@ -335,7 +379,7 @@
 
 .round-header {
   font-weight: 700;
-  color: #FF0000;
+  color: #ffffff;
   margin-bottom: 12px;
   font-size: 14px;
   text-transform: uppercase;
@@ -359,7 +403,7 @@
   font-weight: 600;
   font-size: 13px;
   margin-bottom: 6px;
-  color: #FF0000;
+  color: #ffffff;
 }
 
 .confidence {
@@ -382,7 +426,7 @@
   border-radius: 6px;
   font-size: 13px;
   font-weight: 600;
-  color: #FF0000;
+  color: #ffffff;
 }
 
 /* Verdict */
@@ -396,18 +440,18 @@
 
 .verdict-summary.legitimate {
   background: #000000;
-  border-color: #00ff00;
+  border-color: #ffffff;
 }
 
 .verdict-summary.uncertain {
   background: #000000;
-  border-color: #ffaa00;
+  border-color: #cccccc;
 }
 
 .verdict-summary.scam,
 .verdict-summary.suspicious {
   background: #000000;
-  border-color: #FF0000;
+  border-color: #ffffff;
 }
 
 .classification {
@@ -418,16 +462,16 @@
 }
 
 .verdict-summary.legitimate .classification {
-  color: #00ff00;
+  color: #ffffff;
 }
 
 .verdict-summary.uncertain .classification {
-  color: #ffaa00;
+  color: #cccccc;
 }
 
 .verdict-summary.scam .classification,
 .verdict-summary.suspicious .classification {
-  color: #FF0000;
+  color: #ffffff;
 }
 
 .verdict-summary .confidence {
@@ -453,7 +497,7 @@
 }
 
 .error {
-  color: #FF0000;
+  color: #ffffff;
   text-align: center;
   padding: 20px;
 }
@@ -464,76 +508,104 @@
 
 /* Feed Moderation Styles */
 
-/* Blur overlay for hidden posts */
-.grokguard-blur-overlay {
+/* Blur overlay for hidden posts - Black & White Theme */
+.grokguard-blur-overlay,
+.grokguard-collapse-overlay {
   position: absolute !important;
   top: 0 !important;
   left: 0 !important;
   right: 0 !important;
   bottom: 0 !important;
-  background: rgba(0, 0, 0, 0.95) !important;
+  background: rgba(0, 0, 0, 0.98) !important;
+  backdrop-filter: blur(2px) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   z-index: 10 !important;
-  border: 2px solid #FF0000 !important;
-  border-radius: 12px !important;
+  border: 1px solid #ffffff !important;
+  border-radius: 8px !important;
+  transition: opacity 0.3s ease-out !important;
+}
+
+/* Collapsed post styles */
+[data-grokguard-collapsed="true"] {
+  max-height: 120px !important;
+  transition: max-height 1.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .grokguard-warning-box {
   text-align: center !important;
-  padding: 24px !important;
+  padding: 32px 24px !important;
   color: white !important;
-  max-width: 400px !important;
+  max-width: 450px !important;
+  width: 100% !important;
 }
 
 .warning-icon {
-  font-size: 48px !important;
-  margin-bottom: 12px !important;
+  display: none !important;
 }
 
 .grokguard-warning-box h3 {
-  color: #FF0000 !important;
-  font-size: 18px !important;
-  font-weight: 700 !important;
-  margin: 0 0 12px 0 !important;
+  color: #ffffff !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  margin: 0 0 16px 0 !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
 }
 
 .grokguard-warning-box p {
-  color: #ccc !important;
-  margin: 8px 0 !important;
-  font-size: 14px !important;
+  color: #cccccc !important;
+  margin: 10px 0 !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
 }
 
 .grokguard-warning-box .confidence {
-  color: #FF0000 !important;
-  font-weight: 600 !important;
+  color: #ffffff !important;
+  font-weight: 500 !important;
+  font-size: 12px !important;
 }
 
 .grokguard-warning-box .reason {
-  font-size: 12px !important;
-  color: #999 !important;
-  margin: 12px 0 !important;
+  font-size: 11px !important;
+  color: #aaaaaa !important;
+  margin: 16px 0 20px 0 !important;
+  line-height: 1.5 !important;
+  padding: 12px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-radius: 4px !important;
 }
 
 .grokguard-show-anyway,
 .grokguard-learn-more {
-  background: transparent !important;
-  border: 1px solid #FF0000 !important;
-  color: #FF0000 !important;
-  padding: 8px 16px !important;
-  margin: 4px !important;
-  border-radius: 6px !important;
+  background: #ffffff !important;
+  border: 1px solid #ffffff !important;
+  color: #000000 !important;
+  padding: 10px 20px !important;
+  margin: 6px 4px !important;
+  border-radius: 4px !important;
   cursor: pointer !important;
-  font-weight: 600 !important;
-  font-size: 13px !important;
-  transition: all 0.2s !important;
+  font-weight: 500 !important;
+  font-size: 12px !important;
+  transition: all 0.15s !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
 }
 
-.grokguard-show-anyway:hover,
+.grokguard-show-anyway:hover {
+  background: transparent !important;
+  color: #ffffff !important;
+}
+
+.grokguard-learn-more {
+  background: transparent !important;
+  color: #ffffff !important;
+}
+
 .grokguard-learn-more:hover {
-  background: #FF0000 !important;
-  color: white !important;
+  background: #ffffff !important;
+  color: #000000 !important;
 }
 
 /* Warning badge */
@@ -552,24 +624,32 @@
 }
 
 .grokguard-badge.suspicious {
-  border-color: #ffaa00 !important;
-  color: #ffaa00 !important;
+  border-color: #ffffff !important;
+  color: #ffffff !important;
 }
 
 .grokguard-badge.uncertain {
-  border-color: #888 !important;
-  color: #888 !important;
+  border-color: #cccccc !important;
+  color: #cccccc !important;
 }
 
 .grokguard-badge.scam {
-  border-color: #FF0000 !important;
-  color: #FF0000 !important;
+  border-color: #ffffff !important;
+  color: #ffffff !important;
 }
 
 .grokguard-badge.analyzing {
-  border-color: #00aaff !important;
-  color: #00aaff !important;
-  animation: pulse 1.5s ease-in-out infinite !important;
+  border-color: #ffffff !important;
+  color: #ffffff !important;
+  background: #000000 !important;
+  border: 1px solid #ffffff !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 6px 10px !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
 }
 
 @keyframes pulse {
@@ -587,12 +667,13 @@
 }
 
 .badge-tooltip {
-  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
   position: absolute !important;
   top: 100% !important;
   left: 0 !important;
   background: #000 !important;
-  border: 1px solid #FF0000 !important;
+  border: 1px solid #ffffff !important;
   padding: 12px !important;
   border-radius: 6px !important;
   font-size: 11px !important;
@@ -600,10 +681,12 @@
   z-index: 1000 !important;
   min-width: 250px !important;
   margin-top: 4px !important;
+  color: #ffffff !important;
+  transition: opacity 0.15s ease-out !important;
 }
 
 .grokguard-badge:hover .badge-tooltip {
-  display: block !important;
+  opacity: 1 !important;
 }
 
 /* Feedback buttons */
@@ -635,12 +718,12 @@
 }
 
 .feedback-btn:hover {
-  border-color: #FF0000 !important;
+  border-color: #ffffff !important;
   transform: scale(1.1) !important;
 }
 
 .feedback-thanks {
-  color: #00ff00 !important;
+  color: #ffffff !important;
   font-size: 12px !important;
   font-weight: 600 !important;
 }
@@ -652,10 +735,10 @@
   right: 4px !important;
   width: 18px !important;
   height: 18px !important;
-  background: rgba(0, 255, 0, 0.15) !important;
-  border: 1px solid rgba(0, 255, 0, 0.4) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
   border-radius: 50% !important;
-  color: #00ff00 !important;
+  color: #ffffff !important;
   font-size: 10px !important;
   display: flex !important;
   align-items: center !important;
@@ -664,7 +747,83 @@
   transition: opacity 0.2s !important;
 }
 
+/* Highlighted tweet when jumping from sidebar */
+.grokguard-highlighted-tweet {
+  outline: 3px solid #ffffff !important;
+  outline-offset: 4px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  animation: grokguard-pulse 1s ease-in-out 3 !important;
+}
+
+@keyframes grokguard-pulse {
+  0%, 100% {
+    outline-color: #ffffff;
+    background: rgba(255, 255, 255, 0.05);
+  }
+  50% {
+    outline-color: #ffffff;
+    background: rgba(255, 255, 255, 0.15);
+  }
+}
+
 .grokguard-clean-badge:hover {
+  opacity: 1 !important;
+}
+
+/* Misinformation badge (label only, no collapse) */
+.grokguard-misinfo-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 8px 14px !important;
+  margin: 8px 0 !important;
+  background: #000000 !important;
+  border: 2px solid #ff0000 !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  position: relative !important;
+  color: #ff0000 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+.misinfo-icon {
+  font-size: 16px !important;
+  font-weight: bold !important;
+}
+
+.misinfo-text {
+  font-weight: 700 !important;
+}
+
+.misinfo-confidence {
+  margin-left: auto !important;
+  font-size: 11px !important;
+  opacity: 0.8 !important;
+}
+
+.misinfo-tooltip {
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  margin-top: 8px !important;
+  padding: 12px !important;
+  background: #000000 !important;
+  border: 1px solid #ff0000 !important;
+  border-radius: 6px !important;
+  color: #ffffff !important;
+  font-size: 11px !important;
+  line-height: 1.5 !important;
+  white-space: normal !important;
+  width: 300px !important;
+  z-index: 10000 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 0.2s !important;
+}
+
+.grokguard-misinfo-badge:hover .misinfo-tooltip {
   opacity: 1 !important;
 }
 
@@ -676,10 +835,10 @@
   width: 380px !important;
   max-height: calc(100vh - 100px) !important;
   background: #0a0a0a !important;
-  border: 2px solid #FF0000 !important;
+  border: 2px solid #ffffff !important;
   border-radius: 12px !important;
   z-index: 99998 !important;
-  box-shadow: 0 8px 32px rgba(255, 0, 0, 0.3) !important;
+  box-shadow: 0 8px 32px rgba(255, 255, 255, 0.1) !important;
   display: flex !important;
   flex-direction: column !important;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
@@ -702,22 +861,24 @@
   justify-content: space-between !important;
   align-items: center !important;
   padding: 16px 20px !important;
-  border-bottom: 1px solid #FF0000 !important;
+  border-bottom: 1px solid #ffffff !important;
   background: #000 !important;
   border-radius: 10px 10px 0 0 !important;
 }
 
 .sidebar-header h3 {
   margin: 0 !important;
-  color: #FF0000 !important;
+  color: #ffffff !important;
   font-size: 16px !important;
   font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
 }
 
 .sidebar-close {
   background: transparent !important;
-  border: 1px solid #FF0000 !important;
-  color: #FF0000 !important;
+  border: 1px solid #ffffff !important;
+  color: #ffffff !important;
   width: 28px !important;
   height: 28px !important;
   border-radius: 50% !important;
@@ -730,8 +891,8 @@
 }
 
 .sidebar-close:hover {
-  background: #FF0000 !important;
-  color: white !important;
+  background: #ffffff !important;
+  color: #000000 !important;
 }
 
 .sidebar-content {
@@ -757,7 +918,7 @@
 }
 
 .blocked-post-item:hover {
-  border-color: #FF0000 !important;
+  border-color: #ffffff !important;
 }
 
 .blocked-post-header {
@@ -768,7 +929,7 @@
 }
 
 .blocked-username {
-  color: #FF0000 !important;
+  color: #ffffff !important;
   font-weight: 600 !important;
   font-size: 14px !important;
 }
@@ -802,15 +963,15 @@
 }
 
 .blocked-classification.scam {
-  background: rgba(255, 0, 0, 0.2) !important;
-  color: #FF0000 !important;
-  border: 1px solid #FF0000 !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+  border: 1px solid #ffffff !important;
 }
 
 .blocked-classification.suspicious {
-  background: rgba(255, 170, 0, 0.2) !important;
-  color: #ffaa00 !important;
-  border: 1px solid #ffaa00 !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #cccccc !important;
+  border: 1px solid #cccccc !important;
 }
 
 .blocked-confidence {
@@ -829,11 +990,13 @@
 }
 
 .blocked-post-link {
-  color: #FF0000 !important;
+  color: #ffffff !important;
   font-size: 12px !important;
   text-decoration: none !important;
   font-weight: 600 !important;
   transition: opacity 0.2s !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
 }
 
 .blocked-post-link:hover {
@@ -847,11 +1010,11 @@
 
 /* Fact-check stats */
 .stat-item.factchecked .stat-number {
-  color: #00aaff !important;
+  color: #ffffff !important;
 }
 
 .stat-item.misinfo .stat-number {
-  color: #ff6600 !important;
+  color: #ffffff !important;
 }
 
 .stat-item.factchecked.clickable,
@@ -864,12 +1027,12 @@
 
 .stat-item.factchecked.clickable:hover {
   transform: scale(1.1) !important;
-  background: rgba(0, 170, 255, 0.2) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
 }
 
 .stat-item.misinfo.clickable:hover {
   transform: scale(1.1) !important;
-  background: rgba(255, 102, 0, 0.2) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* Error state banner */
@@ -879,14 +1042,16 @@
 }
 
 .refresh-btn {
-  background: #FF0000 !important;
-  color: white !important;
-  border: none !important;
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #ffffff !important;
   padding: 8px 16px !important;
   border-radius: 6px !important;
   font-weight: 600 !important;
   cursor: pointer !important;
   transition: opacity 0.2s !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
 }
 
 .refresh-btn:hover {

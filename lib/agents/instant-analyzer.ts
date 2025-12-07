@@ -41,15 +41,15 @@ export async function instantAnalyze(username: string, text: string): Promise<{
 
 Analyze NOW and return ONLY JSON:`;
 
-    console.log(`[InstantAnalyzer] Calling Grok API with grok-3-mini...`);
+    console.log(`[InstantAnalyzer] Calling Grok API with grok-4-1-fast...`);
     
-    // Use Grok's fastest model (grok-3-mini) with correct signature: chat(model, messages, options)
-    const response = await grok.chat('grok-3-mini', [
+    // Use Grok's fastest model (grok-3-mini) with optimized parameters for maximum speed
+    const response = await grok.chat('grok-4-1-fast', [
       { role: 'system', content: INSTANT_ANALYSIS_PROMPT },
       { role: 'user', content: userPrompt }
     ], {
-      temperature: 0.1,
-      maxTokens: 100
+      temperature: 0,     // 0 = deterministic, faster responses
+      maxTokens: 50       // Reduced from 100 - shorter response for speed
     });
 
     console.log(`[InstantAnalyzer] Got Grok response:`, JSON.stringify(response).substring(0, 200));
