@@ -225,30 +225,6 @@ const verdict = await arbiter.decide(allRounds);
    - Why consensus was reached
    - All X API calls made
 
-### Judging Criteria Alignment
-
-**1. Usefulness** ⭐⭐⭐⭐⭐
-- Solves X's #1 problem: Bait/scams/impersonators
-- Production-ready with real X API
-- Autonomous = scales without human oversight
-
-**2. Works Today** ⭐⭐⭐⭐⭐
-- Tested with real X accounts
-- 100% test success rate
-- Ready for X.com staff demo
-
-**3. Beauty** ⭐⭐⭐⭐⭐
-- Elegant multi-agent architecture
-- Autonomous investigation planning
-- Transparent debate process
-- (Dashboard UI coming next)
-
-**4. Real Product** ⭐⭐⭐⭐⭐
-- TypeScript SDK
-- Real X API integration
-- Error handling + fallbacks
-- Production deployment path
-
 ## 💡 What "Agentic" Means Here
 
 **Core Principles:**
